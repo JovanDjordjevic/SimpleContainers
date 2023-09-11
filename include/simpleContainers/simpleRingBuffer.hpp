@@ -31,6 +31,7 @@ namespace simpleContainers {
             std::vector<DataType> getElementsInInsertionOrder() const;
 
             void push(const DataType& elem);
+            void push(DataType&& elem);
 
             // emplace
             // pop
@@ -171,6 +172,27 @@ namespace simpleContainers {
         }
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.push_back(elem);
+            ++mNewestElementInsertionIndex;
+        }
+        else {
+            // should never get here
+        }
+
+        return;
+    }
+
+    template <typename DataType>
+    inline void RingBuffer<DataType>::push(DataType&& elem) {
+        if (mBuffer.size() == mCurrentCapacity) {   // more common case
+            if (mNewestElementInsertionIndex == mCurrentCapacity) {
+                mNewestElementInsertionIndex = 0;
+            }
+
+            mBuffer[mNewestElementInsertionIndex] = std::forward<DataType>(elem);
+            ++mNewestElementInsertionIndex;
+        }
+        else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
+            mBuffer.push_back(std::forward<DataType>(elem));
             ++mNewestElementInsertionIndex;
         }
         else {

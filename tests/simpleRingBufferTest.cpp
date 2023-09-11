@@ -78,6 +78,26 @@ int main() {
             assert(rb6.getElementsInInsertionOrder() == expectedResult);
         }
     }
+
+    simpleContainers::RingBuffer<SomeClass> rb7(10);
+    SomeClass sc1{5};
+
+    for (int i = 0; i < 30; ++i) {
+        std::cout << "-------\n";
+        if (i < 10) {
+            rb7.push(SomeClass{i});
+        }
+        else if (i <= 10 && i < 20) {
+            SomeClass scTmp{i};
+            rb7.push(scTmp);
+        }
+        else {
+            rb7.push(sc1);
+        }
+        std::cout << "-------\n";
+    }
     
+    std::cout << "=================" << std::endl;
+
     return 0;
 }
