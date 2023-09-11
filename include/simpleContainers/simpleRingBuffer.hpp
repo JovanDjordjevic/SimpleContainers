@@ -33,9 +33,11 @@ namespace simpleContainers {
             void push(const DataType& elem);
             void push(DataType&& elem);
 
-            // emplace
-            // pop
+            template <typename ...Args>
+            void emplace(Args&&... args);
+
             // resize
+            // swap
 
         private:
             std::vector<DataType> mBuffer;
@@ -201,6 +203,29 @@ namespace simpleContainers {
 
         return;
     }
+
+    template <typename DataType>
+    template <typename ...Args>
+    inline void RingBuffer<DataType>::emplace(Args&&... args) {
+        if (mBuffer.size() == mCurrentCapacity) {   // more common case
+            if (mNewestElementInsertionIndex == mCurrentCapacity) {
+                mNewestElementInsertionIndex = 0;
+            }
+
+            mBuffer[mNewestElementInsertionIndex] = DataType{std::forward<Args>(args)...};
+            ++mNewestElementInsertionIndex;
+        }
+        else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
+            mBuffer.emplace_back(std::forward<Args>(args)...);
+            ++mNewestElementInsertionIndex;
+        }
+        else {
+            // should never get here
+        }
+
+        return;
+    }
+
 } // namespace simpleContainers
 
 #endif // __SIMPLE_RING_BUFFER__

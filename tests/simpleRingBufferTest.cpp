@@ -80,20 +80,35 @@ int main() {
     }
 
     simpleContainers::RingBuffer<SomeClass> rb7(10);
-    SomeClass sc1{5};
-
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 20; ++i) {
         std::cout << "-------\n";
-        if (i < 10) {
-            rb7.push(SomeClass{i});
-        }
-        else if (i <= 10 && i < 20) {
-            SomeClass scTmp{i};
-            rb7.push(scTmp);
-        }
-        else {
-            rb7.push(sc1);
-        }
+        rb7.push(SomeClass{i});
+        std::cout << "-------\n";
+    }
+    std::cout << "------------------------------------------------------\n";
+
+    simpleContainers::RingBuffer<SomeClass> rb8(10);
+    for (int i = 0; i < 20; ++i) {
+        std::cout << "-------\n";
+        SomeClass scTmp{i};
+        rb8.push(scTmp);
+        std::cout << "-------\n";
+    }
+    std::cout << "------------------------------------------------------\n";
+
+    simpleContainers::RingBuffer<SomeClass> rb9(10);
+    SomeClass sc1{5};
+    for (int i = 0; i < 20; ++i) {
+        std::cout << "-------\n";
+        rb9.push(sc1);
+        std::cout << "-------\n";
+    }
+    std::cout << "------------------------------------------------------\n";
+
+    simpleContainers::RingBuffer<SomeClass> rb10(10);
+    for (int i = 0; i < 20; ++i) {
+        std::cout << "-------\n";
+        rb10.emplace(i);
         std::cout << "-------\n";
     }
     
