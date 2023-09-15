@@ -10,6 +10,14 @@ namespace simpleContainers {
     template <typename DataType>
     class RingBuffer {
         public:
+            using value_type = DataType;
+            using reference = DataType&;
+            using const_reference = const DataType&;
+            using pointer = DataType*;
+            // using const_pointer = DataType* const;
+            using size_type = typename std::vector<DataType>::size_type;
+            using difference_type = typename std::vector<DataType>::difference_type;
+
             class RingBufferIterator {
                 public:
                     using iterator_category = std::forward_iterator_tag;
@@ -39,18 +47,11 @@ namespace simpleContainers {
                     RingBuffer<DataType>* mRingBufPtr;
             };
 
-        public:
-            static constexpr std::size_t defaultInitialCapacity = 64;
-
-            using value_type = DataType;
-            using reference = DataType&;
-            using const_reference = const DataType&;
-            using pointer = DataType*;
-            // using const_pointer = DataType* const;
             using iterator = RingBufferIterator;
             // using const_iterator = RingBufferIterator;
-            using size_type = typename std::vector<DataType>::size_type;
-            using difference_type = typename std::vector<DataType>::difference_type;
+
+        public:
+            static constexpr std::size_t defaultInitialCapacity = 64;
 
             RingBuffer() noexcept;
             explicit RingBuffer(const std::size_t initialCapacity) noexcept;
