@@ -6,7 +6,7 @@
 #include "someTestClass.hpp"
 
 int main() {
-    // construction tests
+    std::cout << "================= TESTING RING BUFFER CONSTRUCTION =================" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb1; // default ctor
     assert(rb1.getCurrentCapacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
@@ -41,8 +41,7 @@ int main() {
     assert(rb5.getCurrentCapacity() == tmpRb1InitialCapacity && rb4.getCurrentCapacity() == 0);
     assert(rb5.getCurrentSize() == 0 && rb4.getCurrentSize() == 0);
     
-    std::cout << "=================" << std::endl;
-    // insertion test
+    std::cout << "================= TESTING RING BUFFER INSERTION =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb6(5);
 
@@ -81,38 +80,104 @@ int main() {
 
     simpleContainers::RingBuffer<SomeClass> rb7(10);
     for (int i = 0; i < 20; ++i) {
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
         rb7.push(SomeClass{i});
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
     }
-    std::cout << "------------------------------------------------------\n";
+    std::cout << "------------------------------------------------------" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb8(10);
     for (int i = 0; i < 20; ++i) {
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
         SomeClass scTmp{i};
         rb8.push(scTmp);
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
     }
-    std::cout << "------------------------------------------------------\n";
+    std::cout << "------------------------------------------------------" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb9(10);
     SomeClass sc1{5};
     for (int i = 0; i < 20; ++i) {
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
         rb9.push(sc1);
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
     }
-    std::cout << "------------------------------------------------------\n";
+    std::cout << "------------------------------------------------------" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb10(10);
-    for (int i = 0; i < 20; ++i) {
-        std::cout << "-------\n";
+    for (int i = 0; i < 25; ++i) {
+        std::cout << "-------" << std::endl;
         rb10.emplace(i);
-        std::cout << "-------\n";
+        std::cout << "-------" << std::endl;
     }
     
-    std::cout << "=================" << std::endl;
+    std::cout << "================= TESTING RING BUFFER ITERATOR =================" << std::endl;
+
+    simpleContainers::RingBuffer<int> rb11(10);
+    assert(rb11.isEmpty());
+    assert(rb11.begin() == rb11.end());
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    int elemCnt = 0;
+    for(auto& elem : rb11) { ++elemCnt; }
+    assert(elemCnt == rb11.getCurrentSize());
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    for (int i = 0; i < 5; ++i) { rb11.emplace(i); }
+
+    elemCnt = 0;
+    for(auto& elem : rb11) {
+        ++elemCnt;
+        // std::cout << elem << std::endl;
+    }
+    assert(elemCnt == 5 && rb11.getCurrentSize() == 5);
+    assert(*(rb11.begin()) == 0);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    for (int i = 5; i < 10; ++i) {
+        rb11.emplace(i); 
+    }
+
+    elemCnt = 0;
+    for(auto& elem : rb11) { 
+        ++elemCnt;
+        // std::cout << elem << std::endl;
+    }
+    assert(elemCnt == 10);
+    assert(*(rb11.begin()) == 0);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    for (int i = 10; i < 15; ++i) {
+        rb11.emplace(i); 
+    }
+
+    elemCnt = 0;
+    for(auto& elem : rb11) { 
+        ++elemCnt;
+        // std::cout << elem << std::endl;
+    }
+    assert(elemCnt == 10);
+    assert(*(rb11.begin()) == 5);
+    std::vector<int> expectedResult = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};  // true order at this time in the container is {10, 11, 12, 13, 14, 5, 6, 7, 8, 9};
+    assert(rb11.getElementsInInsertionOrder() == expectedResult);
+
+    // test multipass
+    simpleContainers::RingBuffer<int>::RingBufferIterator itRb11Begin = rb11.begin();
+    simpleContainers::RingBuffer<int>::RingBufferIterator itRb11BeginCpy = itRb11Begin;
+    auto rb11Item1 = *itRb11Begin;
+    assert(rb11Item1 == 5);
+    ++itRb11Begin;
+    itRb11Begin++;
+    rb11Item1 = *itRb11Begin;
+    assert(rb11Item1 == 7);
+    auto rb11Item2 = *itRb11BeginCpy;
+    assert(rb11Item2 == 5);
+
+    std::cout << "------------------------------------------------------" << std::endl;
 
     return 0;
 }

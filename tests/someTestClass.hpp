@@ -45,6 +45,11 @@ class SomeClass {
             LOG("SomeClass DTOR"); 
         }
 
+        friend std::ostream& operator<<(std::ostream& os, const SomeClass& sc) {
+            os << sc.mSomeValue;
+            return os;
+        }
+
     private:
         int mSomeValue;
 };

@@ -10,7 +10,47 @@ namespace simpleContainers {
     template <typename DataType>
     class RingBuffer {
         public:
+            class RingBufferIterator {
+                public:
+                    using iterator_category = std::forward_iterator_tag;
+                    using difference_type = typename RingBuffer<DataType>::difference_type;
+                    using value_type = typename RingBuffer<DataType>::value_type;
+                    using pointer = typename RingBuffer<DataType>::pointer;
+                    using reference = typename RingBuffer<DataType>::reference;
+
+                    RingBufferIterator(pointer ptr = nullptr, RingBuffer<DataType>* rb = nullptr);
+                    // = default for other ctors and assignment?
+
+                    reference operator*() const;
+                    pointer operator->();
+
+                    RingBufferIterator& operator++(); // prefix
+                    RingBufferIterator operator++(int); // postfix
+
+                    friend bool operator==(const RingBufferIterator& lhs, const RingBufferIterator& rhs) {
+                        return (lhs.mPtr == rhs.mPtr) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                    }
+                    friend bool operator!=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) {
+                        return (lhs.mPtr != rhs.mPtr) || (lhs.mRingBufPtr != rhs.mRingBufPtr);
+                    }
+
+                private:
+                    pointer mPtr;
+                    RingBuffer<DataType>* mRingBufPtr;
+            };
+
+        public:
             static constexpr std::size_t defaultInitialCapacity = 64;
+
+            using value_type = DataType;
+            using reference = DataType&;
+            using const_reference = const DataType&;
+            using pointer = DataType*;
+            // using const_pointer = DataType* const;
+            using iterator = RingBufferIterator;
+            // using const_iterator = RingBufferIterator;
+            using size_type = typename std::vector<DataType>::size_type;
+            using difference_type = typename std::vector<DataType>::difference_type;
 
             RingBuffer() noexcept;
             explicit RingBuffer(const std::size_t initialCapacity) noexcept;
@@ -27,7 +67,6 @@ namespace simpleContainers {
             bool isEmpty() const noexcept;
             bool isFull() const noexcept;
 
-
             std::vector<DataType> getElementsInInsertionOrder() const;
 
             void push(const DataType& elem);
@@ -38,6 +77,9 @@ namespace simpleContainers {
 
             // resize
             // swap
+
+            iterator begin();
+            iterator end();
 
         private:
             std::vector<DataType> mBuffer;
@@ -165,19 +207,19 @@ namespace simpleContainers {
     template <typename DataType>
     inline void RingBuffer<DataType>::push(const DataType& elem) {
         if (mBuffer.size() == mCurrentCapacity) {   // more common case
-            if (mNewestElementInsertionIndex == mCurrentCapacity) {
-                mNewestElementInsertionIndex = 0;
-            }
-
             mBuffer[mNewestElementInsertionIndex] = elem;
-            ++mNewestElementInsertionIndex;
         }
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.push_back(elem);
-            ++mNewestElementInsertionIndex;
         }
         else {
-            // should never get here
+            // should not get here
+        }
+
+        ++mNewestElementInsertionIndex;
+
+        if (mNewestElementInsertionIndex == mCurrentCapacity) {
+            mNewestElementInsertionIndex = 0;
         }
 
         return;
@@ -186,19 +228,19 @@ namespace simpleContainers {
     template <typename DataType>
     inline void RingBuffer<DataType>::push(DataType&& elem) {
         if (mBuffer.size() == mCurrentCapacity) {   // more common case
-            if (mNewestElementInsertionIndex == mCurrentCapacity) {
-                mNewestElementInsertionIndex = 0;
-            }
-
             mBuffer[mNewestElementInsertionIndex] = std::forward<DataType>(elem);
-            ++mNewestElementInsertionIndex;
         }
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.push_back(std::forward<DataType>(elem));
-            ++mNewestElementInsertionIndex;
         }
         else {
-            // should never get here
+            // should not get here
+        }
+
+        ++mNewestElementInsertionIndex;
+
+        if (mNewestElementInsertionIndex == mCurrentCapacity) {
+            mNewestElementInsertionIndex = 0;
         }
 
         return;
@@ -208,24 +250,91 @@ namespace simpleContainers {
     template <typename ...Args>
     inline void RingBuffer<DataType>::emplace(Args&&... args) {
         if (mBuffer.size() == mCurrentCapacity) {   // more common case
-            if (mNewestElementInsertionIndex == mCurrentCapacity) {
-                mNewestElementInsertionIndex = 0;
-            }
-
             mBuffer[mNewestElementInsertionIndex] = DataType{std::forward<Args>(args)...};
-            ++mNewestElementInsertionIndex;
         }
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.emplace_back(std::forward<Args>(args)...);
-            ++mNewestElementInsertionIndex;
         }
         else {
-            // should never get here
+            // should not get here
+        }
+
+        ++mNewestElementInsertionIndex;
+
+        if (mNewestElementInsertionIndex == mCurrentCapacity) {
+            mNewestElementInsertionIndex = 0;
         }
 
         return;
     }
 
+    template <typename DataType>
+    inline RingBuffer<DataType>::RingBufferIterator::RingBufferIterator(pointer ptr, RingBuffer<DataType>* rb) 
+        : mPtr{ptr}, mRingBufPtr{rb}
+    {}
+
+    template<class DataType> 
+    inline typename RingBuffer<DataType>::RingBufferIterator::reference RingBuffer<DataType>::RingBufferIterator::operator*() const {
+        return *mPtr;
+    }
+
+    template<class DataType> 
+    inline typename RingBuffer<DataType>::RingBufferIterator::pointer RingBuffer<DataType>::RingBufferIterator::operator->() {
+        return mPtr;
+    }
+
+    template<class DataType> 
+    inline typename RingBuffer<DataType>::RingBufferIterator& RingBuffer<DataType>::RingBufferIterator::operator++() {
+        mPtr++;
+
+        auto& mBuf = mRingBufPtr->mBuffer;
+        auto mBufSize = mBuf.size();
+
+        if (mBufSize == 0) {
+            mPtr = nullptr;
+        }
+        else if (mBufSize < mRingBufPtr->mCurrentCapacity) {
+            if (mPtr == &(mBuf[0]) + mBufSize) {
+                mPtr = nullptr;
+            }
+        }
+        else {  // size == capacity
+            if (mPtr == &(mBuf[0]) + mBufSize) {
+                mPtr = &(mBuf[0]);
+            }
+
+            if (mPtr == &(mBuf[mRingBufPtr->mNewestElementInsertionIndex])) {
+                mPtr = nullptr;
+            }
+        }
+
+        return *this;
+    }
+
+    template<class DataType> 
+    inline typename RingBuffer<DataType>::RingBufferIterator RingBuffer<DataType>::RingBufferIterator::operator++(int) {
+        RingBufferIterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    template <typename DataType>
+    inline typename RingBuffer<DataType>::iterator RingBuffer<DataType>::begin() {
+        if (mBuffer.empty()) {
+            return end();
+        }
+        else if (mBuffer.size() < mCurrentCapacity) {
+            return RingBufferIterator{&mBuffer[0], this};
+        }
+        else { // size == capacity
+            return RingBufferIterator{&mBuffer[mNewestElementInsertionIndex], this};
+        }
+    }
+
+    template <typename DataType>
+    inline typename RingBuffer<DataType>::iterator RingBuffer<DataType>::end() {
+        return RingBufferIterator{nullptr, this};
+    }
 } // namespace simpleContainers
 
 #endif // __SIMPLE_RING_BUFFER__
