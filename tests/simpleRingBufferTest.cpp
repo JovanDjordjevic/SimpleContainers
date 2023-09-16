@@ -158,7 +158,6 @@ int main() {
     elemCnt = 0;
     for(auto& elem : rb11) { 
         ++elemCnt;
-        // std::cout << elem << std::endl;
     }
     assert(elemCnt == 10);
     assert(*(rb11.begin()) == 5);
@@ -166,8 +165,8 @@ int main() {
     assert(rb11.getElementsInInsertionOrder() == expectedResult);
 
     // test multipass
-    simpleContainers::RingBuffer<int>::RingBufferIterator itRb11Begin = rb11.begin();
-    simpleContainers::RingBuffer<int>::RingBufferIterator itRb11BeginCpy = itRb11Begin;
+    simpleContainers::RingBuffer<int>::iterator itRb11Begin = rb11.begin();
+    simpleContainers::RingBuffer<int>::iterator itRb11BeginCpy = itRb11Begin;
     auto rb11Item1 = *itRb11Begin;
     assert(rb11Item1 == 5);
     ++itRb11Begin;
@@ -177,6 +176,34 @@ int main() {
     auto rb11Item2 = *itRb11BeginCpy;
     assert(rb11Item2 == 5);
 
+    std::cout << "------------------------------------------------------" << std::endl;
+    // const iteration
+
+    elemCnt = 0;
+    for (auto i = rb11.cbegin(); i != rb11.cend(); ++i) {
+        ++ elemCnt;
+    }
+    assert(elemCnt == 10);
+
+    simpleContainers::RingBuffer<int>::const_iterator itRb11Cbegin = rb11.cbegin();
+    simpleContainers::RingBuffer<int>::const_iterator itRb11CbeginCpy = itRb11Cbegin;
+    auto rb11Citem1 = *itRb11Cbegin;
+    assert(rb11Citem1 == 5);
+    ++itRb11Cbegin;
+    itRb11Cbegin++;
+    rb11Citem1 = *itRb11Cbegin;
+    assert(rb11Citem1 == 7);
+    auto rb11Citem2 = *itRb11CbeginCpy;
+    assert(rb11Citem2 == 5);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    // create const from non const iterator
+    simpleContainers::RingBuffer<int>::const_iterator rb11ConstItFromNonConstIt = rb11.begin();
+
+    auto tmpIt = rb11.cbegin();
+    tmpIt = rb11.begin();
+        
     std::cout << "------------------------------------------------------" << std::endl;
 
     return 0;

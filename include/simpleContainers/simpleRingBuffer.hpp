@@ -1,8 +1,9 @@
 #ifndef __SIMPLE_RING_BUFFER__
 #define __SIMPLE_RING_BUFFER__
 
-#include <vector>
 #include <iostream>
+#include <type_traits>
+#include <vector>
 
 // =============================== API ===============================
 
@@ -18,18 +19,36 @@ namespace simpleContainers {
             using size_type = typename std::vector<DataType>::size_type;
             using difference_type = typename std::vector<DataType>::difference_type;
 
+            template <bool ConstTag = false>
             class RingBufferIterator {
                 public:
+                    friend class RingBufferIterator<false>;
+                    friend class RingBufferIterator<true>;
+
                     using iterator_category = std::forward_iterator_tag;
                     using difference_type = typename RingBuffer<DataType>::difference_type;
                     using value_type = typename RingBuffer<DataType>::value_type;
                     using pointer = typename RingBuffer<DataType>::pointer;
-                    using reference = typename RingBuffer<DataType>::reference;
+                    using reference = typename std::conditional<ConstTag, typename RingBuffer<DataType>::const_reference, typename RingBuffer<DataType>::reference>::type;
 
                     RingBufferIterator(pointer ptr = nullptr, RingBuffer<DataType>* rb = nullptr);
+
+                    RingBufferIterator(const RingBufferIterator& other) = default;
+
+                    // coversion from non const to const iterator
+                    template <bool C = ConstTag, typename = typename std::enable_if<C>::type>
+                    RingBufferIterator(const RingBufferIterator<false>& other);
+
                     // = default for other ctors and assignment?
 
-                    reference operator*() const;
+                    // SFINAE will enable this for const iterators
+                    template <bool C = ConstTag>
+                    typename std::enable_if<C, reference>::type operator*();
+
+                    // SFINAE will enable this for non const iterator
+                    template <bool C = ConstTag>
+                    typename std::enable_if<!C, reference>::type operator*();
+
                     pointer operator->();
 
                     RingBufferIterator& operator++(); // prefix
@@ -47,9 +66,9 @@ namespace simpleContainers {
                     RingBuffer<DataType>* mRingBufPtr;
             };
 
-            using iterator = RingBufferIterator;
-            // using const_iterator = RingBufferIterator;
-
+            using iterator = RingBufferIterator<false>;
+            using const_iterator = RingBufferIterator<true>;
+            
         public:
             static constexpr std::size_t defaultInitialCapacity = 64;
 
@@ -81,6 +100,8 @@ namespace simpleContainers {
 
             iterator begin();
             iterator end();
+            const_iterator cbegin();
+            const_iterator cend();
 
         private:
             std::vector<DataType> mBuffer;
@@ -270,22 +291,55 @@ namespace simpleContainers {
     }
 
     template <typename DataType>
-    inline RingBuffer<DataType>::RingBufferIterator::RingBufferIterator(pointer ptr, RingBuffer<DataType>* rb) 
+    template <bool ConstTag>
+    inline RingBuffer<DataType>::RingBufferIterator<ConstTag>::RingBufferIterator(pointer ptr, RingBuffer<DataType>* rb) 
         : mPtr{ptr}, mRingBufPtr{rb}
-    {}
+    {
+        if (ConstTag == true) {
+            std::cout << "CONSTRUCTING CONST ITERATOR" << std::endl;
+        }
+        else {
+            std::cout << "CONSTRUCTING NON CONST ITERATOR" << std::endl;
+        }
+    }
 
-    template<class DataType> 
-    inline typename RingBuffer<DataType>::RingBufferIterator::reference RingBuffer<DataType>::RingBufferIterator::operator*() const {
+
+    template <typename DataType>
+    template <bool ConstTag> 
+    template <bool C, typename> 
+    inline RingBuffer<DataType>::RingBufferIterator<ConstTag>::RingBufferIterator(const RingBuffer<DataType>::RingBufferIterator<false> &other) 
+        : mPtr{other.mPtr}, mRingBufPtr{other.mRingBufPtr} 
+    {
+        std::cout << "converting non const iter to const iter" << std::endl;
+    }
+
+    template <typename DataType>
+    template <bool ConstTag>
+    template <bool C>
+    inline typename std::enable_if<!C, typename RingBuffer<DataType>::template RingBufferIterator<ConstTag>::reference>::type
+    RingBuffer<DataType>::RingBufferIterator<ConstTag>::operator*() {
         return *mPtr;
     }
 
-    template<class DataType> 
-    inline typename RingBuffer<DataType>::RingBufferIterator::pointer RingBuffer<DataType>::RingBufferIterator::operator->() {
+    template <typename DataType>
+    template <bool ConstTag>
+    template <bool C>
+    inline typename std::enable_if<C, typename RingBuffer<DataType>::template RingBufferIterator<ConstTag>::reference>::type
+    RingBuffer<DataType>::RingBufferIterator<ConstTag>::operator*() {
+        return *mPtr;
+    }
+
+    template <typename DataType>
+    template <bool ConstTag>
+    inline typename RingBuffer<DataType>::template RingBufferIterator<ConstTag>::pointer 
+    RingBuffer<DataType>::RingBufferIterator<ConstTag>::operator->() {
         return mPtr;
     }
 
-    template<class DataType> 
-    inline typename RingBuffer<DataType>::RingBufferIterator& RingBuffer<DataType>::RingBufferIterator::operator++() {
+    template <typename DataType>
+    template <bool ConstTag>
+    inline typename RingBuffer<DataType>::template RingBufferIterator<ConstTag>& 
+    RingBuffer<DataType>::RingBufferIterator<ConstTag>::operator++() {
         mPtr++;
 
         auto& mBuf = mRingBufPtr->mBuffer;
@@ -312,8 +366,10 @@ namespace simpleContainers {
         return *this;
     }
 
-    template<class DataType> 
-    inline typename RingBuffer<DataType>::RingBufferIterator RingBuffer<DataType>::RingBufferIterator::operator++(int) {
+    template <typename DataType>
+    template <bool ConstTag>
+    inline typename RingBuffer<DataType>::template RingBufferIterator<ConstTag> 
+    RingBuffer<DataType>::RingBufferIterator<ConstTag>::operator++(int) {
         RingBufferIterator tmp = *this;
         ++(*this);
         return tmp;
@@ -325,16 +381,34 @@ namespace simpleContainers {
             return end();
         }
         else if (mBuffer.size() < mCurrentCapacity) {
-            return RingBufferIterator{&mBuffer[0], this};
+            return iterator{&mBuffer[0], this};
         }
         else { // size == capacity
-            return RingBufferIterator{&mBuffer[mNewestElementInsertionIndex], this};
+            return iterator{&mBuffer[mNewestElementInsertionIndex], this};
         }
     }
 
     template <typename DataType>
     inline typename RingBuffer<DataType>::iterator RingBuffer<DataType>::end() {
-        return RingBufferIterator{nullptr, this};
+        return iterator{nullptr, this};
+    }
+
+    template <typename DataType>
+    inline typename RingBuffer<DataType>::const_iterator RingBuffer<DataType>::cbegin() {
+        if (mBuffer.empty()) {
+            return cend();
+        }
+        else if (mBuffer.size() < mCurrentCapacity) {
+            return const_iterator{&mBuffer[0], this};
+        }
+        else { // size == capacity
+            return const_iterator{&mBuffer[mNewestElementInsertionIndex], this};
+        }
+    }
+
+    template <typename DataType>
+    inline typename RingBuffer<DataType>::const_iterator RingBuffer<DataType>::cend() {
+        return const_iterator{nullptr, this};
     }
 } // namespace simpleContainers
 
