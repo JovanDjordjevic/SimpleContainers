@@ -1,45 +1,91 @@
-#include <iostream>
 #include <cassert>
+#include <iostream>
+#include <string>
+#include <utility>
 
 #include "simpleContainers/simpleRingBuffer.hpp"
 
 #include "someTestClass.hpp"
 
 int main() {
-    std::cout << "================= TESTING RING BUFFER CONSTRUCTION =================" << std::endl;
+    std::cout << "================= TESTING RING BUFFER CONSTRUCTION FOR CLASS TYPE =================" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb1; // default ctor
     assert(rb1.getCurrentCapacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
-    assert(rb1.getCurrentSize() == 0);
+    assert(rb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb2 = rb1;  // copy ctor
     assert(rb2.getCurrentCapacity() == rb1.getCurrentCapacity());
-    assert(rb2.getCurrentSize() == rb1.getCurrentSize());
+    assert(rb2.size() == rb1.size());
 
     simpleContainers::RingBuffer<SomeClass> rb3{rb1};  // copy ctor
     assert(rb3.getCurrentCapacity() == rb1.getCurrentCapacity());
-    assert(rb3.getCurrentSize() == rb1.getCurrentSize());
+    assert(rb3.size() == rb1.size());
 
     rb3 = rb2; // copy assignment
     assert(rb3.getCurrentCapacity() == rb2.getCurrentCapacity());
-    assert(rb3.getCurrentSize() == rb2.getCurrentSize());
+    assert(rb3.size() == rb2.size());
 
     std::size_t tmpRb1InitialCapacity = 5;
     simpleContainers::RingBuffer<SomeClass> tmpRb1{tmpRb1InitialCapacity}; // capacity ctor
     assert(tmpRb1.getCurrentCapacity() == tmpRb1InitialCapacity);
-    assert(tmpRb1.getCurrentSize() == 0);
+    assert(tmpRb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb4 = std::move(tmpRb1); // move ctor
     assert(rb4.getCurrentCapacity() == tmpRb1InitialCapacity && tmpRb1.getCurrentCapacity() == 0);
-    assert(rb4.getCurrentSize() == 0 && tmpRb1.getCurrentSize() == 0);
+    assert(rb4.size() == 0 && tmpRb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb5 = simpleContainers::RingBuffer<SomeClass>{}; // default ctor for temporary, move ctor for rb5, dtor for temporary
     assert(rb5.getCurrentCapacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
-    assert(rb5.getCurrentSize() == 0);
+    assert(rb5.size() == 0);
 
     rb5 = std::move(rb4); // move assignment
     assert(rb5.getCurrentCapacity() == tmpRb1InitialCapacity && rb4.getCurrentCapacity() == 0);
-    assert(rb5.getCurrentSize() == 0 && rb4.getCurrentSize() == 0);
+    assert(rb5.size() == 0 && rb4.size() == 0);
+
+    std::cout << "================= TESTING RING BUFFER MEMBER FUNCTIONS =================" << std::endl;
+
+    std::vector<SomeClass> tmpVec;
+    assert(rb5.max_size() == tmpVec.max_size());
+
+    // swap
+    simpleContainers::RingBuffer<std::string> rbSwap1(5);
+    for (int i = 0; i < 5; ++i) { rbSwap1.emplace(std::to_string(i)); }
+    std::vector<std::string> rbSwap1ExpectedContents{"0", "1", "2", "3", "4"};
+    assert(rbSwap1.getElementsInInsertionOrder() == rbSwap1ExpectedContents);
+    simpleContainers::RingBuffer<std::string> rbSwap1Cpy = rbSwap1;
+    assert(rbSwap1 == rbSwap1Cpy);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    simpleContainers::RingBuffer<std::string> rbSwap2(5);
+    for (int i = 5; i < 10; ++i) { rbSwap2.emplace(std::to_string(i)); }
+    std::vector<std::string> rbSwap2ExpectedContents{"5", "6", "7", "8", "9"};
+    assert(rbSwap2.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
+    simpleContainers::RingBuffer<std::string> rbSwap2Cpy = rbSwap2;
+    assert(rbSwap2 == rbSwap2Cpy);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    assert(rbSwap1 != rbSwap2);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    rbSwap1.swap(rbSwap2);
+    assert(rbSwap1 != rbSwap2);
+    assert(rbSwap1.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
+    assert(rbSwap2.getElementsInInsertionOrder() == rbSwap1ExpectedContents);
+    assert(rbSwap1 != rbSwap1Cpy && rbSwap1 == rbSwap2Cpy);
+    assert(rbSwap2 != rbSwap2Cpy && rbSwap2 == rbSwap1Cpy);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    std::swap(rbSwap1, rbSwap2);
+    assert(rbSwap1 != rbSwap2);
+    assert(rbSwap1.getElementsInInsertionOrder() == rbSwap1ExpectedContents);
+    assert(rbSwap2.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
+    assert(rbSwap1 == rbSwap1Cpy && rbSwap1 != rbSwap2Cpy);
+    assert(rbSwap2 == rbSwap2Cpy && rbSwap2 != rbSwap1Cpy);
     
     std::cout << "================= TESTING RING BUFFER INSERTION =================" << std::endl;
 
@@ -110,18 +156,22 @@ int main() {
         rb10.emplace(i);
         std::cout << "-------" << std::endl;
     }
+
+    simpleContainers::RingBuffer<SomeClass> rb10Cpy = rb10;
+    assert(rb10 == rb10Cpy);
+    assert(rb9 != rb10);
     
     std::cout << "================= TESTING RING BUFFER ITERATOR =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb11(10);
-    assert(rb11.isEmpty());
+    assert(rb11.empty());
     assert(rb11.begin() == rb11.end());
 
     std::cout << "------------------------------------------------------" << std::endl;
 
     int elemCnt = 0;
     for(auto& elem : rb11) { ++elemCnt; }
-    assert(elemCnt == rb11.getCurrentSize());
+    assert(elemCnt == rb11.size());
 
     std::cout << "------------------------------------------------------" << std::endl;
 
@@ -132,7 +182,7 @@ int main() {
         ++elemCnt;
         // std::cout << elem << std::endl;
     }
-    assert(elemCnt == 5 && rb11.getCurrentSize() == 5);
+    assert(elemCnt == 5 && rb11.size() == 5);
     assert(*(rb11.begin()) == 0);
 
     std::cout << "------------------------------------------------------" << std::endl;

@@ -45,6 +45,10 @@ class SomeClass {
             LOG("SomeClass DTOR"); 
         }
 
+        friend bool operator==(const SomeClass& lhs, const SomeClass& rhs) {
+            return lhs.mSomeValue == rhs.mSomeValue;
+        }
+
         friend std::ostream& operator<<(std::ostream& os, const SomeClass& sc) {
             os << sc.mSomeValue;
             return os;
