@@ -235,6 +235,15 @@ int main() {
     }
     assert(elemCnt == 10);
 
+    const simpleContainers::RingBuffer<int> rb11Const = rb11;
+    elemCnt = 0;
+    for (auto& elem : rb11Const) {
+        ++ elemCnt;
+    }
+    assert(elemCnt == 10);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
     simpleContainers::RingBuffer<int>::const_iterator itRb11Cbegin = rb11.cbegin();
     simpleContainers::RingBuffer<int>::const_iterator itRb11CbeginCpy = itRb11Cbegin;
     auto rb11Citem1 = *itRb11Cbegin;
