@@ -439,20 +439,12 @@ namespace simpleContainers {
 
     template <typename DataType>
     inline typename RingBuffer<DataType>::const_iterator RingBuffer<DataType>::cbegin() const noexcept {
-        if (mBuffer.empty()) {
-            return cend();
-        }
-        else if (mBuffer.size() < mCurrentCapacity) {
-            return const_iterator{&mBuffer[0], this};
-        }
-        else { // size == capacity
-            return const_iterator{&mBuffer[mNewestElementInsertionIndex], this};
-        }
+        return begin();
     }
 
     template <typename DataType>
     inline typename RingBuffer<DataType>::const_iterator RingBuffer<DataType>::cend() const noexcept {
-        return const_iterator{nullptr, this};
+        return end();
     }
 
     template <typename T>
