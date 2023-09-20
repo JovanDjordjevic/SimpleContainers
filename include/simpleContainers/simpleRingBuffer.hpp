@@ -88,6 +88,7 @@ namespace simpleContainers {
             size_type max_size() const noexcept;
             bool empty() const noexcept;
             bool full() const noexcept;
+            void clear() noexcept;
 
             std::vector<T> getElementsInInsertionOrder() const;
 
@@ -101,7 +102,6 @@ namespace simpleContainers {
 
             // CTOR that takes an initializer list and CTOR that takes a vector?
             // resize
-            // clear
 
             iterator begin() noexcept;
             iterator end() noexcept;
@@ -286,6 +286,12 @@ namespace simpleContainers {
     template <typename T>
     inline bool RingBuffer<T>::full() const noexcept {
         return mBuffer.size() == mCurrentCapacity;
+    }
+
+    template <typename T>
+    inline void RingBuffer<T>::clear() noexcept {
+        mNewestElementInsertionIndex = 0;
+        mBuffer.clear();
     }
 
     template <typename T>

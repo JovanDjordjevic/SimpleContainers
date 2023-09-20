@@ -86,6 +86,11 @@ int main() {
     assert(rbSwap2.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
     assert(rbSwap1 == rbSwap1Cpy && rbSwap1 != rbSwap2Cpy);
     assert(rbSwap2 == rbSwap2Cpy && rbSwap2 != rbSwap1Cpy);
+
+    
+    assert(rbSwap1.full() == true);
+    rbSwap1.clear();
+    assert(rbSwap1.empty() == true);
     
     std::cout << "================= TESTING RING BUFFER INSERTION =================" << std::endl;
 
