@@ -11,36 +11,36 @@ int main() {
     std::cout << "================= TESTING RING BUFFER CONSTRUCTION FOR CLASS TYPE =================" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb1; // default ctor
-    assert(rb1.getCurrentCapacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
+    assert(rb1.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     assert(rb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb2 = rb1;  // copy ctor
-    assert(rb2.getCurrentCapacity() == rb1.getCurrentCapacity());
+    assert(rb2.capacity() == rb1.capacity());
     assert(rb2.size() == rb1.size());
 
     simpleContainers::RingBuffer<SomeClass> rb3{rb1};  // copy ctor
-    assert(rb3.getCurrentCapacity() == rb1.getCurrentCapacity());
+    assert(rb3.capacity() == rb1.capacity());
     assert(rb3.size() == rb1.size());
 
     rb3 = rb2; // copy assignment
-    assert(rb3.getCurrentCapacity() == rb2.getCurrentCapacity());
+    assert(rb3.capacity() == rb2.capacity());
     assert(rb3.size() == rb2.size());
 
     std::size_t tmpRb1InitialCapacity = 5;
     simpleContainers::RingBuffer<SomeClass> tmpRb1{tmpRb1InitialCapacity}; // capacity ctor
-    assert(tmpRb1.getCurrentCapacity() == tmpRb1InitialCapacity);
+    assert(tmpRb1.capacity() == tmpRb1InitialCapacity);
     assert(tmpRb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb4 = std::move(tmpRb1); // move ctor
-    assert(rb4.getCurrentCapacity() == tmpRb1InitialCapacity && tmpRb1.getCurrentCapacity() == 0);
+    assert(rb4.capacity() == tmpRb1InitialCapacity && tmpRb1.capacity() == 0);
     assert(rb4.size() == 0 && tmpRb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb5 = simpleContainers::RingBuffer<SomeClass>{}; // default ctor for temporary, move ctor for rb5, dtor for temporary
-    assert(rb5.getCurrentCapacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
+    assert(rb5.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     assert(rb5.size() == 0);
 
     rb5 = std::move(rb4); // move assignment
-    assert(rb5.getCurrentCapacity() == tmpRb1InitialCapacity && rb4.getCurrentCapacity() == 0);
+    assert(rb5.capacity() == tmpRb1InitialCapacity && rb4.capacity() == 0);
     assert(rb5.size() == 0 && rb4.size() == 0);
 
     std::cout << "================= TESTING RING BUFFER MEMBER FUNCTIONS =================" << std::endl;
@@ -164,7 +164,7 @@ int main() {
     std::cout << "================= TESTING RING BUFFER ITERATOR =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb11(10);
-    assert(rb11.empty());
+    assert(rb11.empty() && (rb11.empty() == !rb1.full()));
     assert(rb11.begin() == rb11.end());
 
     std::cout << "------------------------------------------------------" << std::endl;
@@ -197,6 +197,7 @@ int main() {
         // std::cout << elem << std::endl;
     }
     assert(elemCnt == 10);
+    assert(rb11.full());
     assert(*(rb11.begin()) == 0);
 
     std::cout << "------------------------------------------------------" << std::endl;
@@ -264,6 +265,23 @@ int main() {
     tmpIt = rb11.begin();
         
     std::cout << "------------------------------------------------------" << std::endl;
+
+    simpleContainers::RingBuffer<int> rb12;
+    for (int i = 0; i < 500; ++i) { rb12.emplace(i); }
+    for (auto& elem : rb12) { elem = 0; }
+    auto itRb12End = rb12.end();
+    for (auto it = rb12.begin(); it != itRb12End; ++it) { assert (*it == 0); }
+    for (auto it = rb12.begin(); it != itRb12End; ++it) { *it = 5; }
+    for (auto it = rb12.begin(); it != itRb12End; ++it) { assert (*it == 5); }
+
+    // const simpleContainers::RingBuffer<int> rb12Const = rb12;
+    // for (auto& elem : rb12Const) { elem = 0; }
+    // for (auto it = rb12Const.begin(); it != rb12Const.end(); ++it) {
+    //     assert (*it == 0);   // fails compilation as expected
+    // }
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
 
     return 0;
 }
