@@ -91,7 +91,43 @@ int main() {
     assert(rbSwap1.full() == true);
     rbSwap1.clear();
     assert(rbSwap1.empty() == true);
-    
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    simpleContainers::RingBuffer<int> rbResize(5);
+    assert(rbResize.empty() && rbResize.capacity() == 5);
+    for (int i = 1; i < 10; ++i) { rbResize.emplace(i); }
+
+    std::vector<int> rbResizeExpectedResult = {5, 6, 7, 8, 9};
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+
+    rbResize.changeCapacity(5); // should cause no change
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+
+    rbResize.changeCapacity(10); // should expand the capacity, and internally reorder 
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.capacity() == 10 && !rbResize.empty() && !rbResize.full());
+
+    for (int i = 1; i < 10; ++i) { rbResize.emplace(i); }
+    rbResizeExpectedResult = {9, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+    rbResize.emplace(10);
+    rbResizeExpectedResult = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+
+    rbResize.changeCapacity(5); // should reduce the capacity, keep only 5 last inserted elements  
+    rbResizeExpectedResult = {6, 7, 8, 9, 10};
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+    rbResize.emplace(11);
+    rbResizeExpectedResult = {7, 8, 9, 10, 11};
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+
     std::cout << "================= TESTING RING BUFFER INSERTION =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb6(5);

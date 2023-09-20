@@ -84,6 +84,7 @@ namespace simpleContainers {
             ~RingBuffer() noexcept;   // = default;
 
             size_type capacity() const noexcept;
+            void changeCapacity(const size_type newCapacity) noexcept;
             size_type size() const noexcept;
             size_type max_size() const noexcept;
             bool empty() const noexcept;
@@ -266,6 +267,37 @@ namespace simpleContainers {
     template <typename T>
     inline typename RingBuffer<T>::size_type RingBuffer<T>::capacity() const noexcept {
         return mCurrentCapacity;
+    }
+
+    template <typename T>
+    inline void RingBuffer<T>::changeCapacity(const size_type newCapacity) noexcept {
+        if (newCapacity == mCurrentCapacity) {
+            return;
+        }
+
+        std::vector<T> newBuffer;
+        newBuffer.reserve(newCapacity);
+
+        auto it = begin();
+        if (newCapacity < mCurrentCapacity) { // only keep the last newCapacity elements
+            size_type tmp = mCurrentCapacity - newCapacity;
+            while (tmp > 0) {
+                ++it;
+                --tmp;
+            }
+        }
+
+        auto itEnd = end();
+        while (it != itEnd) {
+            newBuffer.emplace_back(*it);
+            ++it;
+        }
+
+        mBuffer.swap(newBuffer);
+        mNewestElementInsertionIndex = newBuffer.size() % newCapacity;
+        mCurrentCapacity = newCapacity;
+
+        return;
     }
 
     template <typename T>
