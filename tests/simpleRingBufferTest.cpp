@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -202,7 +203,7 @@ int main() {
     assert(rb10 == rb10Cpy);
     assert(rb9 != rb10);
     
-    std::cout << "================= TESTING RING BUFFER ITERATOR =================" << std::endl;
+    std::cout << "================= TESTING RING BUFFER ITERATORS =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb11(10);
     assert(rb11.empty() && (rb11.empty() == !rb1.full()));
@@ -254,6 +255,22 @@ int main() {
     assert(elemCnt == 10);
     assert(*(rb11.begin()) == 5);
     std::vector<int> expectedResult = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};  // true order at this time in the container is {10, 11, 12, 13, 14, 5, 6, 7, 8, 9};
+    assert(rb11.getElementsInInsertionOrder() == expectedResult);
+
+    auto itRb11Find1 = std::find(rb11.begin(), rb11.end(), 8);
+    assert(itRb11Find1 != rb11.end() && *itRb11Find1 == 8);
+    auto itRb11Find2 = std::find(rb11.begin(), rb11.end(), 12);
+    assert(itRb11Find2 != rb11.end() && *itRb11Find2 == 12);
+
+    itRb11Find1.swap(itRb11Find2);
+    assert(*itRb11Find2 == 8 && *itRb11Find1 == 12);
+
+    std::swap(itRb11Find1, itRb11Find2);
+    assert(*itRb11Find1 == 8 && *itRb11Find2 == 12);
+
+    std::iter_swap(itRb11Find1, itRb11Find2);
+    assert(*itRb11Find1 == 12 && *itRb11Find2 == 8);
+    expectedResult = {5, 6, 7, 12, 9, 10, 11, 8, 13, 14};
     assert(rb11.getElementsInInsertionOrder() == expectedResult);
 
     // test multipass

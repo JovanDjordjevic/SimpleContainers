@@ -55,6 +55,8 @@ namespace simpleContainers {
                     RingBufferIterator& operator++() noexcept; // prefix
                     RingBufferIterator operator++(int) noexcept; // postfix
 
+                    void swap(RingBufferIterator& other) noexcept;
+
                     friend bool operator==(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
                         return (lhs.mPtr == rhs.mPtr) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
                     }
@@ -200,6 +202,14 @@ namespace simpleContainers {
         RingBufferIterator tmp = *this;
         ++(*this);
         return tmp;
+    }
+
+    template <typename T>
+    template <bool constTag>
+    inline void RingBuffer<T>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
+        std::swap(mPtr, other.mPtr);
+        std::swap(mRingBufPtr, other.mRingBufPtr);
+        return;
     }
 
     template <typename T>
