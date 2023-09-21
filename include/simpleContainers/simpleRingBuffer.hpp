@@ -84,6 +84,8 @@ namespace simpleContainers {
             RingBuffer(const RingBuffer& other) noexcept;   // = default;
             RingBuffer(RingBuffer&& other) noexcept;   // = default;
 
+            // CTOR that takes an initializer list and CTOR that takes a vector?
+
             RingBuffer& operator=(const RingBuffer& rhs) noexcept;   // = default;
             RingBuffer& operator=(RingBuffer&& rhs) noexcept;   // = default;
 
@@ -97,7 +99,7 @@ namespace simpleContainers {
             bool full() const noexcept;
             void clear() noexcept;
 
-            std::vector<T> getElementsInInsertionOrder() const;
+            std::vector<T> getElementsInInsertionOrder() const noexcept;
 
             void push(const T& elem);
             void push(T&& elem);
@@ -105,10 +107,7 @@ namespace simpleContainers {
             template <typename ...Args>
             void emplace(Args&&... args);
 
-            void swap(RingBuffer<T>& other);
-
-            // CTOR that takes an initializer list and CTOR that takes a vector?
-            // resize
+            void swap(RingBuffer<T>& other) noexcept;
 
             iterator begin() noexcept;
             iterator end() noexcept;
@@ -170,30 +169,26 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T>::template RingBufferIterator<constTag>& 
     RingBuffer<T>::RingBufferIterator<constTag>::operator++() noexcept {
-        mPtr++;
+        auto mBufPtr = mRingBufPtr->mBuffer.data();
+        const size_type mBufSize = mRingBufPtr->mBuffer.size();
+        const size_type mBufCapacity = mRingBufPtr->mCurrentCapacity;
 
-        auto& mBuf = mRingBufPtr->mBuffer;
-        auto mBufSize = mBuf.size();
+        ++mPtr;
 
-        if (mBufSize == mRingBufPtr->mCurrentCapacity) {  // most common case
-            if (mPtr == &(mBuf[0]) + mBufSize) {
-                mPtr = &(mBuf[0]);
+        if (mBufSize == mBufCapacity) {  // most common case
+            if (mPtr == mBufPtr + mBufSize) {
+                mPtr = mBufPtr;
             }
 
-            if (mPtr == &(mBuf[mRingBufPtr->mNewestElementInsertionIndex])) {
+            if (mPtr == mBufPtr + mRingBufPtr->mNewestElementInsertionIndex) {
                 mPtr = nullptr;
             }
         }
         else if (mBufSize == 0) {
             mPtr = nullptr;
         }
-        else if (mBufSize < mRingBufPtr->mCurrentCapacity) {
-            if (mPtr == &(mBuf[0]) + mBufSize) {
-                mPtr = nullptr;
-            }
-        }
-        else {
-            // should not get here
+        else if (mBufSize < mBufCapacity && mPtr == mBufPtr + mBufSize) {
+            mPtr = nullptr;
         }
 
         return *this;
@@ -383,7 +378,7 @@ namespace simpleContainers {
     }
 
     template <typename T>
-    inline std::vector<T> RingBuffer<T>::getElementsInInsertionOrder() const {
+    inline std::vector<T> RingBuffer<T>::getElementsInInsertionOrder() const noexcept {
         if (mBuffer.size() < mCurrentCapacity) {
             return mBuffer;
         }
@@ -411,9 +406,6 @@ namespace simpleContainers {
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.push_back(elem);
         }
-        else {
-            // should not get here
-        }
 
         ++mNewestElementInsertionIndex;
 
@@ -431,9 +423,6 @@ namespace simpleContainers {
         }
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.push_back(std::forward<T>(elem));
-        }
-        else {
-            // should not get here
         }
 
         ++mNewestElementInsertionIndex;
@@ -454,9 +443,6 @@ namespace simpleContainers {
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
             mBuffer.emplace_back(std::forward<Args>(args)...);
         }
-        else {
-            // should not get here
-        }
 
         ++mNewestElementInsertionIndex;
 
@@ -468,7 +454,7 @@ namespace simpleContainers {
     }
 
     template <typename T>
-    inline void RingBuffer<T>::swap(RingBuffer<T>& other) {
+    inline void RingBuffer<T>::swap(RingBuffer<T>& other) noexcept {
         std::swap(mBuffer, other.mBuffer);
         std::swap(mCurrentCapacity, other.mCurrentCapacity);
         std::swap(mNewestElementInsertionIndex, other.mNewestElementInsertionIndex);
