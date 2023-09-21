@@ -33,7 +33,8 @@ namespace simpleContainers {
                     friend class RingBufferIterator<false>;
                     friend class RingBufferIterator<true>;
 
-                    using iterator_category = std::forward_iterator_tag;
+                    using iterator_category = std::bidirectional_iterator_tag;
+                    using size_type = typename RingBuffer<T>::size_type;
                     using difference_type = typename RingBuffer<T>::difference_type;
                     using value_type = typename RingBuffer<T>::value_type;
                     using pointer = typename std::conditional<constTag, typename RingBuffer<T>::const_pointer, typename RingBuffer<T>::pointer>::type;
@@ -54,6 +55,9 @@ namespace simpleContainers {
 
                     RingBufferIterator& operator++() noexcept; // prefix
                     RingBufferIterator operator++(int) noexcept; // postfix
+
+                    RingBufferIterator& operator--() noexcept; // prefix
+                    RingBufferIterator operator--(int) noexcept; // postfix
 
                     void swap(RingBufferIterator& other) noexcept;
 
@@ -201,6 +205,48 @@ namespace simpleContainers {
     RingBuffer<T>::RingBufferIterator<constTag>::operator++(int) noexcept {
         RingBufferIterator tmp = *this;
         ++(*this);
+        return tmp;
+    }
+
+    template <typename T>
+    template <bool constTag>
+    inline typename RingBuffer<T>::template RingBufferIterator<constTag>& 
+    RingBuffer<T>::RingBufferIterator<constTag>::operator--() noexcept {
+        auto mBufPtr = mRingBufPtr->mBuffer.data();
+        const size_type mBufSize = mRingBufPtr->mBuffer.size();
+
+        if (mBufSize == 0) {
+            mPtr = nullptr;
+        }
+        else if (mPtr == nullptr) {
+            size_type offset = mRingBufPtr->mNewestElementInsertionIndex;
+
+            if (mBufSize == mRingBufPtr->mCurrentCapacity && offset == 0) {
+                offset = mBufSize - 1;
+            }
+            else {
+                --offset;
+            }
+
+            mPtr = mBufPtr + offset;
+        }
+        else {
+            if (mBufSize == mRingBufPtr->mCurrentCapacity && mPtr == mBufPtr) {
+                mPtr = mBufPtr + mBufSize;
+            }
+
+            --mPtr;
+        }
+
+        return *this;
+    }
+
+    template <typename T>
+    template <bool constTag>
+    inline typename RingBuffer<T>::template RingBufferIterator<constTag> 
+    RingBuffer<T>::RingBufferIterator<constTag>::operator--(int) noexcept {
+        RingBufferIterator tmp = *this;
+        --(*this);
         return tmp;
     }
 

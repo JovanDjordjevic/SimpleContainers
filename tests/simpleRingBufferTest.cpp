@@ -339,7 +339,50 @@ int main() {
     // }
 
     std::cout << "------------------------------------------------------" << std::endl;
+    // test bidirection
+    simpleContainers::RingBuffer<int> rb13(5);
+    for (int i = 1; i < 4; ++i) { rb13.emplace(i); } // fill half
+    assert(rb13.size() == 3 && rb13.capacity() == 5);
 
+    auto itRb13 = rb13.begin();         assert(*itRb13 == 1);
+    ++itRb13;                           assert(*itRb13 == 2);
+    itRb13++;                           assert(*itRb13 == 3);
+    ++itRb13;                           assert(itRb13 == rb13.end());
+    --itRb13;                           assert(*itRb13 == 3);
+    itRb13--;                           assert(*itRb13 == 2);
+    --itRb13;                           assert(itRb13 == rb13.begin());
+
+    for (int i = 4; i < 6; ++i) { rb13.emplace(i); }    // fill entire, without old value overwrite
+    assert(rb13.size() == 5 && rb13.capacity() == 5);
+
+    itRb13 = rb13.begin();         assert(*itRb13 == 1);
+    itRb13++;                      assert(*itRb13 == 2);
+    ++itRb13;                      assert(*itRb13 == 3);
+    itRb13++;                      assert(*itRb13 == 4);
+    ++itRb13;                      assert(*itRb13 == 5);
+    ++itRb13;                      assert(itRb13 == rb13.end());
+    itRb13--;                      assert(*itRb13 == 5);
+    --itRb13;                      assert(*itRb13 == 4);
+    itRb13--;                      assert(*itRb13 == 3);
+    --itRb13;                      assert(*itRb13 == 2);
+    --itRb13;                      assert(itRb13 == rb13.begin());
+
+    for (int i = 6; i < 8; ++i) { rb13.emplace(i); }    // overwrite old values
+    assert(rb13.size() == 5 && rb13.capacity() == 5);
+
+    itRb13 = rb13.begin();         assert(*itRb13 == 3);
+    itRb13++;                      assert(*itRb13 == 4);
+    ++itRb13;                      assert(*itRb13 == 5);
+    itRb13++;                      assert(*itRb13 == 6);
+    ++itRb13;                      assert(*itRb13 == 7);
+    ++itRb13;                      assert(itRb13 == rb13.end());
+    itRb13--;                      assert(*itRb13 == 7);
+    --itRb13;                      assert(*itRb13 == 6);
+    itRb13--;                      assert(*itRb13 == 5);
+    --itRb13;                      assert(*itRb13 == 4);
+    --itRb13;                      assert(itRb13 == rb13.begin());
+
+    std::cout << "------------------------------------------------------" << std::endl;
 
     return 0;
 }
