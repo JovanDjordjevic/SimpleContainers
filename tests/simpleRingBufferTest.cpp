@@ -28,13 +28,31 @@ int main() {
     assert(rb3.size() == rb2.size());
 
     std::size_t tmpRb1InitialCapacity = 5;
-    simpleContainers::RingBuffer<SomeClass> tmpRb1{tmpRb1InitialCapacity}; // capacity ctor
+    simpleContainers::RingBuffer<SomeClass> tmpRb1(tmpRb1InitialCapacity); // capacity ctor
     assert(tmpRb1.capacity() == tmpRb1InitialCapacity);
     assert(tmpRb1.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rbInvalidCapacity(0); // capacity ctor, if capacity is 0, default capacity will be used
     assert(rbInvalidCapacity.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     assert(rbInvalidCapacity.size() == 0);
+
+    std::vector<int> tmpVec{1, 2, 3, 4, 5};
+    simpleContainers::RingBuffer<int> rbFromVec(tmpVec);    // ctor from vector
+    assert(rbFromVec.size() == tmpVec.size() && rbFromVec.capacity() == tmpVec.size());
+
+    simpleContainers::RingBuffer<double> rbFromInitialierList{1.0, 2.0, 3.0, 4.0, 5.0};     // ctor from initializer list
+    assert(rbFromVec.size() == 5 && rbFromVec.capacity() == 5);
+
+    simpleContainers::RingBuffer<char> rbFill(5, 'a');      // fill ctor
+    assert(rbFill.size() == 5 && rbFill.capacity() == 5);
+    std::vector<char> rbFillExpected(5, 'a');
+    assert(rbFill.getElementsInInsertionOrder() == rbFillExpected);
+
+    simpleContainers::RingBuffer<double> rbFromRbIterators1(tmpVec.begin(), tmpVec.end());   // iterator pair ctor
+    assert(rbFromRbIterators1.size() == tmpVec.size() && rbFromRbIterators1.capacity() == tmpVec.capacity());
+
+    simpleContainers::RingBuffer<double> rbFromRbIterators2(rbFromRbIterators1.begin(), rbFromRbIterators1.end());   // iterator pair ctor
+    assert(rbFromRbIterators2.size() == rbFromRbIterators1.size() && rbFromRbIterators2.capacity() == rbFromRbIterators1.capacity());
 
     simpleContainers::RingBuffer<SomeClass> rb4 = std::move(tmpRb1); // move ctor
     assert(rb4.capacity() == tmpRb1InitialCapacity && tmpRb1.capacity() == 0);
@@ -50,8 +68,8 @@ int main() {
 
     std::cout << "================= TESTING RING BUFFER MEMBER FUNCTIONS =================" << std::endl;
 
-    std::vector<SomeClass> tmpVec;
-    assert(rb5.max_size() == tmpVec.max_size());
+    std::vector<SomeClass> tmpVecMaxSize;
+    assert(rb5.max_size() == tmpVecMaxSize.max_size());
 
     // swap
     simpleContainers::RingBuffer<std::string> rbSwap1(5);

@@ -1,6 +1,7 @@
 #ifndef __SIMPLE_RING_BUFFER__
 #define __SIMPLE_RING_BUFFER__
 
+#include <initializer_list>
 #include <iostream>
 #include <vector>
 
@@ -81,10 +82,14 @@ namespace simpleContainers {
             static constexpr size_type defaultInitialCapacity = 64;
 
             RingBuffer(const size_type initialCapacity = defaultInitialCapacity) noexcept;
+            RingBuffer(const size_type initialCapacity, const T& val) noexcept;
+            RingBuffer(const std::vector<T>& initVec) noexcept;
+            RingBuffer(std::initializer_list<T> initList) noexcept;
+            template <typename It>
+            RingBuffer(It itStart, It itEnd) noexcept;
+
             RingBuffer(const RingBuffer& other) noexcept;   // = default;
             RingBuffer(RingBuffer&& other) noexcept;   // = default;
-
-            // CTOR that takes an initializer list and CTOR that takes a vector?
 
             RingBuffer& operator=(const RingBuffer& rhs) noexcept;   // = default;
             RingBuffer& operator=(RingBuffer&& rhs) noexcept;   // = default;
@@ -260,6 +265,37 @@ namespace simpleContainers {
         mBuffer.reserve(mCurrentCapacity);
         std::cout << "BUFFER CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
         return;
+    }
+
+    template <typename T>
+    inline RingBuffer<T>::RingBuffer(const size_type initialCapacity, const T& val) noexcept
+        : mBuffer{std::vector<T>(initialCapacity == 0 ? defaultInitialCapacity : initialCapacity, val)}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
+    {
+        mBuffer.reserve(mCurrentCapacity);
+        std::cout << "BUFFER FILL CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
+        return;
+    }
+    
+    template <typename T>
+    inline RingBuffer<T>::RingBuffer(const std::vector<T>& initVec) noexcept 
+        : mBuffer{initVec}, mCurrentCapacity{initVec.size()}, mNewestElementInsertionIndex{0}
+    {
+        std::cout << "BUFFER CTOR FROM CONST REF VECTOR " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
+    }
+
+    template <typename T>
+    inline RingBuffer<T>::RingBuffer(std::initializer_list<T> initList) noexcept
+        : mBuffer{initList}, mCurrentCapacity{initList.size()}, mNewestElementInsertionIndex{0}
+    {
+        std::cout << "BUFFER CTOR FROM INITIALIZER LIST " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
+    }
+
+    template <typename T>
+    template <typename It>
+    inline RingBuffer<T>::RingBuffer(It itStart, It itEnd) noexcept 
+        : mBuffer(itStart, itEnd), mCurrentCapacity{static_cast<size_type>(std::distance(itStart, itEnd))}, mNewestElementInsertionIndex{0}
+    {
+        std::cout << "BUFFER CTOR FROM ITERATOR PAIR capacity " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
     template <typename T>
