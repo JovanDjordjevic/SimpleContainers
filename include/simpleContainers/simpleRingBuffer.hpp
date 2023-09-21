@@ -255,10 +255,10 @@ namespace simpleContainers {
 
     template <typename T>
     inline RingBuffer<T>::RingBuffer(const size_type initialCapacity) noexcept
-        : mBuffer{std::vector<T>{}}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
+        : mBuffer{std::vector<T>{}}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
     {
-        mBuffer.reserve(initialCapacity);
-        std::cout << "BUFFER CTOR WITH CAPACITY " << initialCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
+        mBuffer.reserve(mCurrentCapacity);
+        std::cout << "BUFFER CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
         return;
     }
 
@@ -322,7 +322,7 @@ namespace simpleContainers {
 
     template <typename T>
     inline void RingBuffer<T>::changeCapacity(const size_type newCapacity) noexcept {
-        if (newCapacity == mCurrentCapacity) {
+        if (newCapacity == mCurrentCapacity || newCapacity == 0) {
             return;
         }
 

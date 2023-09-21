@@ -32,6 +32,10 @@ int main() {
     assert(tmpRb1.capacity() == tmpRb1InitialCapacity);
     assert(tmpRb1.size() == 0);
 
+    simpleContainers::RingBuffer<SomeClass> rbInvalidCapacity(0); // capacity ctor, if capacity is 0, default capacity will be used
+    assert(rbInvalidCapacity.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
+    assert(rbInvalidCapacity.size() == 0);
+
     simpleContainers::RingBuffer<SomeClass> rb4 = std::move(tmpRb1); // move ctor
     assert(rb4.capacity() == tmpRb1InitialCapacity && tmpRb1.capacity() == 0);
     assert(rb4.size() == 0 && tmpRb1.size() == 0);
@@ -100,6 +104,10 @@ int main() {
     for (int i = 1; i < 10; ++i) { rbResize.emplace(i); }
 
     std::vector<int> rbResizeExpectedResult = {5, 6, 7, 8, 9};
+    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.full());
+
+    rbResize.changeCapacity(0); // should cause no change, 0 will be ignored
     assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
     assert(rbResize.full());
 
