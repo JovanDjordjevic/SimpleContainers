@@ -1,16 +1,19 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <numeric>
+#include <random>
 #include <string>
 #include <utility>
 
 #include "simpleContainers/simpleRingBuffer.hpp"
 
 #include "someTestClass.hpp"
+#include "someTemplateTestClass.hpp"
 #include "someAllocatorClass.hpp"
 
 int main() {
-    std::cout << "================= TESTING RING BUFFER CONSTRUCTION FOR CLASS TYPE =================" << std::endl;
+    std::cout << "================= TESTING RING BUFFER CONSTRUCTION =================" << std::endl;
 
     simpleContainers::RingBuffer<SomeClass> rb1; // default ctor
     assert(rb1.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
@@ -236,11 +239,33 @@ int main() {
     assert(rb10 == rb10Cpy);
     assert(rb9 != rb10);
     
+    // test for tempalte classes
+
+    simpleContainers::RingBuffer<SomeTemplateClass<std::string>> rbWithTemplateClass;
+    assert(rbWithTemplateClass.capacity() == simpleContainers::RingBuffer<SomeTemplateClass<std::string>>::defaultInitialCapacity);
+    rbWithTemplateClass.push(SomeTemplateClass<std::string>{"someStr1"});
+    rbWithTemplateClass.emplace("someStr2");
+    assert(rbWithTemplateClass.size() == 2);
+    std::vector<SomeTemplateClass<std::string>> rbWithTemplateClassExpected{SomeTemplateClass<std::string>{"someStr1"}, SomeTemplateClass<std::string>{"someStr2"}};
+    assert(rbWithTemplateClass.getElementsInInsertionOrder() == rbWithTemplateClassExpected);
+
     std::cout << "================= TESTING RING BUFFER ITERATORS =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb11(10);
     assert(rb11.empty() && (rb11.empty() == !rb1.full()));
     assert(rb11.begin() == rb11.end());
+
+    auto itRb11EmptyBegin = rb11.begin();
+    ++itRb11EmptyBegin;
+    assert(itRb11EmptyBegin == rb11.end());
+    itRb11EmptyBegin++;
+    assert(itRb11EmptyBegin == rb11.end());
+
+    itRb11EmptyBegin = rb11.begin();
+    --itRb11EmptyBegin;
+    assert(itRb11EmptyBegin == rb11.end());
+    itRb11EmptyBegin--;
+    assert(itRb11EmptyBegin == rb11.end());
 
     std::cout << "------------------------------------------------------" << std::endl;
 
@@ -320,6 +345,15 @@ int main() {
 
     std::cout << "------------------------------------------------------" << std::endl;
     // const iteration
+
+    simpleContainers::RingBuffer<int> rbEmpty(10);
+    assert(rbEmpty.empty() && rbEmpty.capacity() == 10);
+    simpleContainers::RingBuffer<int>::const_iterator itRbEmpty = rbEmpty.begin();
+    assert(itRbEmpty == rbEmpty.end());
+
+    rbEmpty.emplace(1);
+    itRbEmpty = rbEmpty.begin();
+    assert(itRbEmpty != rbEmpty.end() && *itRbEmpty == 1);
 
     elemCnt = 0;
     for (auto i = rb11.cbegin(); i != rb11.cend(); ++i) {
@@ -414,6 +448,95 @@ int main() {
     itRb13--;                      assert(*itRb13 == 5);
     --itRb13;                      assert(*itRb13 == 4);
     --itRb13;                      assert(itRb13 == rb13.begin());
+
+    std::cout << "================= TESTING IN STL CONTAINERS =================" << std::endl;
+
+    std::vector<simpleContainers::RingBuffer<SomeClass>> vectorOfRingBuffers;
+    assert(vectorOfRingBuffers.size() == 0);
+    vectorOfRingBuffers.resize(5);
+    assert(vectorOfRingBuffers.size() == 5);
+    for (auto& vecRb : vectorOfRingBuffers) {
+        assert(vecRb.size() == 0 && vecRb.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
+    }
+
+    for (auto& vecRb : vectorOfRingBuffers) {
+        std::cout << "-------" << std::endl;
+        for (int i = 0; i < 5; ++i) {
+            vecRb.emplace(SomeClass{i});
+        }
+        std::cout << "-------" << std::endl;
+    }
+
+    for (auto& vecRb : vectorOfRingBuffers) {
+        assert(vecRb.size() == 5 && vecRb.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
+    }
+
+    // add tests for other stl containers after implementing comparisson operators
+
+    std::cout << "================= TESTING IN STL ALGORITHMS =================" << std::endl;
+
+    simpleContainers::RingBuffer<long> rb14{262, 3426, -123, 552, -91, 251, 673};
+    assert(rb14.size() == 7 && rb14.capacity() == 7);
+
+    assert(std::all_of(rb14.cbegin(), rb14.cend(), [](long i) { return i != 0; }));
+    assert(std::any_of(rb14.begin(), rb14.end(), [](long i) { return i % 2 == 0; }));
+    assert(std::count(rb14.cbegin(), rb14.cend(), 552) == 1);
+    assert(std::find(rb14.begin(), rb14.end(), -91) != rb14.end());
+
+    simpleContainers::RingBuffer<long> rb14Filtered;
+    assert(rb14Filtered.empty() && rb14Filtered.capacity() == simpleContainers::RingBuffer<long>::defaultInitialCapacity);
+    // std::copy_if(rb14.begin(), rb14.end(), std::back_inserter(rb14Filtered), [](long x) { return x < 0; });  // back_inserter does not work since there is no method called 'push_back'
+    // std::copy_if(rb14.begin(), rb14.end(), rb14Filtered.begin(), [](long x) { return x < 0; });      // this does not work since std::copy and copy_if do ASSIGNMENT, so values in rb14Filtered must already exist
+    // assert(rb14Filtered.size() == 2);
+
+    auto rb14Cpy = rb14;
+    std::fill(std::begin(rb14Cpy), std::end(rb14Cpy), 5);
+    assert(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 5) == rb14Cpy.size());
+
+    std::transform(std::begin(rb14Cpy), std::end(rb14Cpy), std::begin(rb14Cpy), [](long x) { return x * 2; });
+    assert(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 10) == rb14Cpy.size());
+
+    rb14Cpy = rb14;
+    std::replace_if(std::begin(rb14Cpy), std::end(rb14Cpy), [](long x) { return x > 1000; }, 1000);
+    assert(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 1000) == 1);
+
+    std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
+    auto itRemoveRb14 = std::remove_if(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ return elem > 0; });  // DOES NOT BEHAVE AS EXPECTED!!!!!
+    std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });        // DOES NOT PRINT WHAT IS EXPECTED!!!!!    PRINTS: -123 -91 -123 552 -91 251 673
+
+    std::vector<long> rb14Expected{262, 3426, -123, 552, -91, 251, 673};
+    assert(rb14.getElementsInInsertionOrder() == rb14Expected);
+    std::reverse(rb14.begin(), rb14.end());
+    rb14Expected = {673, 251, -91, 552, -123, 3426, 262};
+    assert(rb14.getElementsInInsertionOrder() == rb14Expected);
+
+    auto itRb14Find = std::find(rb14.begin(), rb14.end(), -91);
+    assert(itRb14Find != rb14.end());
+    std::rotate(rb14.begin(), itRb14Find, rb14.end());
+    rb14Expected = {-91, 552, -123, 3426, 262, 673, 251};
+    assert(rb14.getElementsInInsertionOrder() == rb14Expected);
+
+    rb14Cpy = rb14;
+    // std::shuffle(rb14Cpy.begin(), rb14Cpy.end());   // NEEDS RANDOM ACCESS ITERATOR
+
+    auto itRb14Partition = std::stable_partition(rb14Cpy.begin(), rb14Cpy.end(), [](long x) {return x % 2 == 0;});
+    rb14Expected = {552, 3426, 262, -91, -123, 673, 251};
+    assert(rb14Cpy.getElementsInInsertionOrder() == rb14Expected);
+
+    assert(!std::is_sorted(rb14Cpy.begin(), rb14Cpy.end()));
+    // std::sort(rb14Cpy.begin(), rb14Cpy.end()); // NEEDS RANDOM ACCESS ITERATOR
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
+    // assert(std::is_sorted(rb14Cpy.begin(), rb14Cpy.end()));
+
+    auto itRb14LowerBound = std::lower_bound(rb14Cpy.begin(), rb14Cpy.end(), 673);
+    assert(itRb14LowerBound != rb14Cpy.end());
+
+    auto itRb14Min = std::min_element(rb14Cpy.begin(), rb14Cpy.end());
+    auto itRb14Max = std::max_element(rb14Cpy.begin(), rb14Cpy.end());
+    assert(itRb14Min != rb14Cpy.end() && *itRb14Min == -123);
+    assert(itRb14Max != rb14Cpy.end() && *itRb14Max == 3426);
+
+   assert(4950 == std::accumulate(std::begin(rb14Cpy), std::end(rb14Cpy), long(0), [](long acc, long x) { return acc + x; }));
 
     std::cout << "------------------------------------------------------" << std::endl;
 
