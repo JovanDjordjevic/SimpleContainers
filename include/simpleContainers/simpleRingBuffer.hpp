@@ -8,25 +8,26 @@
 // =============================== API ===============================
 
 namespace simpleContainers {
-    template <typename T>
+    template <typename T, typename Allocator>
     class RingBuffer;
 
-    template <typename T>
-    inline bool operator==(const RingBuffer<T>& lhs, const RingBuffer<T>& rhs) noexcept;
+    template <typename T, typename Allocator>
+    inline bool operator==(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
 
-    template <typename T>
-    inline bool operator!=(const RingBuffer<T>& lhs, const RingBuffer<T>& rhs) noexcept;
+    template <typename T, typename Allocator>
+    inline bool operator!=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
 
-    template <typename T>
+    template <typename T, typename Allocator = std::allocator<T>>
     class RingBuffer {
         public:
             using value_type = T;
+            using allocator_type = Allocator;
             using reference = T&;
             using const_reference = const T&;
             using pointer = T*;
             using const_pointer = const T*;
-            using size_type = typename std::vector<T>::size_type;
-            using difference_type = typename std::vector<T>::difference_type;
+            using size_type = typename std::vector<T, Allocator>::size_type;
+            using difference_type = typename std::vector<T, Allocator>::difference_type;
 
             template <bool constTag = false>
             class RingBufferIterator {
@@ -35,12 +36,12 @@ namespace simpleContainers {
                     friend class RingBufferIterator<true>;
 
                     using iterator_category = std::bidirectional_iterator_tag;
-                    using size_type = typename RingBuffer<T>::size_type;
-                    using difference_type = typename RingBuffer<T>::difference_type;
-                    using value_type = typename RingBuffer<T>::value_type;
-                    using pointer = typename std::conditional<constTag, typename RingBuffer<T>::const_pointer, typename RingBuffer<T>::pointer>::type;
-                    using reference = typename std::conditional<constTag, typename RingBuffer<T>::const_reference, typename RingBuffer<T>::reference>::type;
-                    using ring_buffer_ptr = typename std::conditional<constTag, const RingBuffer<T>*, RingBuffer<T>*>::type;
+                    using size_type = typename RingBuffer<T, Allocator>::size_type;
+                    using difference_type = typename RingBuffer<T, Allocator>::difference_type;
+                    using value_type = typename RingBuffer<T, Allocator>::value_type;
+                    using pointer = typename std::conditional<constTag, typename RingBuffer<T, Allocator>::const_pointer, typename RingBuffer<T, Allocator>::pointer>::type;
+                    using reference = typename std::conditional<constTag, typename RingBuffer<T, Allocator>::const_reference, typename RingBuffer<T, Allocator>::reference>::type;
+                    using ring_buffer_ptr = typename std::conditional<constTag, const RingBuffer<T, Allocator>*, RingBuffer<T, Allocator>*>::type;
 
                     RingBufferIterator(pointer ptr = nullptr, ring_buffer_ptr rb = nullptr) noexcept;
                     RingBufferIterator(const RingBufferIterator& other) noexcept = default;
@@ -81,12 +82,12 @@ namespace simpleContainers {
         public:
             static constexpr size_type defaultInitialCapacity = 64;
 
-            RingBuffer(const size_type initialCapacity = defaultInitialCapacity) noexcept;
-            RingBuffer(const size_type initialCapacity, const T& val) noexcept;
-            RingBuffer(const std::vector<T>& initVec) noexcept;
-            RingBuffer(std::initializer_list<T> initList) noexcept;
+            RingBuffer(const size_type initialCapacity = defaultInitialCapacity, const Allocator& alloc = Allocator{}) noexcept;
+            RingBuffer(const size_type initialCapacity, const T& val, const Allocator& alloc = Allocator{}) noexcept;
+            RingBuffer(const std::vector<T, Allocator>& initVec, const Allocator& alloc = Allocator{}) noexcept;
+            RingBuffer(std::initializer_list<T> initList, const Allocator& alloc = Allocator{}) noexcept;
             template <typename It>
-            RingBuffer(It itStart, It itEnd) noexcept;
+            RingBuffer(It itStart, It itEnd, const Allocator& alloc = Allocator{}) noexcept;
 
             RingBuffer(const RingBuffer& other) noexcept;   // = default;
             RingBuffer(RingBuffer&& other) noexcept;   // = default;
@@ -96,6 +97,7 @@ namespace simpleContainers {
 
             ~RingBuffer() noexcept;   // = default;
 
+            allocator_type get_allocator() const noexcept;
             size_type capacity() const noexcept;
             void changeCapacity(const size_type newCapacity) noexcept;
             size_type size() const noexcept;
@@ -112,7 +114,7 @@ namespace simpleContainers {
             template <typename ...Args>
             void emplace(Args&&... args);
 
-            void swap(RingBuffer<T>& other) noexcept;
+            void swap(RingBuffer& other) noexcept;
 
             iterator begin() noexcept;
             iterator end() noexcept;
@@ -121,11 +123,11 @@ namespace simpleContainers {
             const_iterator cbegin() const noexcept;
             const_iterator cend() const noexcept;
 
-            friend bool operator== <>(const RingBuffer<T>& lhs, const RingBuffer<T>& rhs) noexcept;
-            friend bool operator!= <>(const RingBuffer<T>& lhs, const RingBuffer<T>& rhs) noexcept;
+            friend bool operator== <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+            friend bool operator!= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
         
         private:
-            std::vector<T> mBuffer;
+            std::vector<T, Allocator> mBuffer;
             size_type mCurrentCapacity;
             size_type mNewestElementInsertionIndex;
     };
@@ -134,9 +136,9 @@ namespace simpleContainers {
 // =============================== IMPLEMENTATION ===============================
 
 namespace simpleContainers {
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline RingBuffer<T>::RingBufferIterator<constTag>::RingBufferIterator(pointer ptr, ring_buffer_ptr rb) noexcept
+    inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(pointer ptr, ring_buffer_ptr rb) noexcept
         : mPtr{ptr}, mRingBufPtr{rb}
     {
         if (constTag == true) {
@@ -147,33 +149,33 @@ namespace simpleContainers {
         }
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag> 
     template <bool C, typename> 
-    inline RingBuffer<T>::RingBufferIterator<constTag>::RingBufferIterator(const RingBuffer<T>::RingBufferIterator<false> &other) noexcept
+    inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(const RingBuffer<T, Allocator>::RingBufferIterator<false> &other) noexcept
         : mPtr{other.mPtr}, mRingBufPtr{other.mRingBufPtr} 
     {
         std::cout << "converting non const iter to const iter" << std::endl;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline typename RingBuffer<T>::template RingBufferIterator<constTag>::reference
-    RingBuffer<T>::RingBufferIterator<constTag>::operator*() const noexcept {
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator*() const noexcept {
         return *mPtr;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline typename RingBuffer<T>::template RingBufferIterator<constTag>::pointer 
-    RingBuffer<T>::RingBufferIterator<constTag>::operator->() const noexcept {
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::pointer 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator->() const noexcept {
         return mPtr;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline typename RingBuffer<T>::template RingBufferIterator<constTag>& 
-    RingBuffer<T>::RingBufferIterator<constTag>::operator++() noexcept {
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator++() noexcept {
         auto mBufPtr = mRingBufPtr->mBuffer.data();
         const size_type mBufSize = mRingBufPtr->mBuffer.size();
         const size_type mBufCapacity = mRingBufPtr->mCurrentCapacity;
@@ -199,19 +201,19 @@ namespace simpleContainers {
         return *this;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline typename RingBuffer<T>::template RingBufferIterator<constTag> 
-    RingBuffer<T>::RingBufferIterator<constTag>::operator++(int) noexcept {
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator++(int) noexcept {
         RingBufferIterator tmp = *this;
         ++(*this);
         return tmp;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline typename RingBuffer<T>::template RingBufferIterator<constTag>& 
-    RingBuffer<T>::RingBufferIterator<constTag>::operator--() noexcept {
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator--() noexcept {
         auto mBufPtr = mRingBufPtr->mBuffer.data();
         const size_type mBufSize = mRingBufPtr->mBuffer.size();
 
@@ -241,73 +243,73 @@ namespace simpleContainers {
         return *this;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline typename RingBuffer<T>::template RingBufferIterator<constTag> 
-    RingBuffer<T>::RingBufferIterator<constTag>::operator--(int) noexcept {
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator--(int) noexcept {
         RingBufferIterator tmp = *this;
         --(*this);
         return tmp;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <bool constTag>
-    inline void RingBuffer<T>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
+    inline void RingBuffer<T, Allocator>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
         std::swap(mPtr, other.mPtr);
         std::swap(mRingBufPtr, other.mRingBufPtr);
         return;
     }
 
-    template <typename T>
-    inline RingBuffer<T>::RingBuffer(const size_type initialCapacity) noexcept
-        : mBuffer{std::vector<T>{}}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const Allocator& alloc) noexcept
+        : mBuffer{std::vector<T, Allocator>{alloc}}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
     {
         mBuffer.reserve(mCurrentCapacity);
         std::cout << "BUFFER CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
         return;
     }
 
-    template <typename T>
-    inline RingBuffer<T>::RingBuffer(const size_type initialCapacity, const T& val) noexcept
-        : mBuffer{std::vector<T>(initialCapacity == 0 ? defaultInitialCapacity : initialCapacity, val)}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const T& val, const Allocator& alloc) noexcept
+        : mBuffer{std::vector<T, Allocator>(initialCapacity == 0 ? defaultInitialCapacity : initialCapacity, val, alloc)}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
     {
         mBuffer.reserve(mCurrentCapacity);
         std::cout << "BUFFER FILL CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
         return;
     }
     
-    template <typename T>
-    inline RingBuffer<T>::RingBuffer(const std::vector<T>& initVec) noexcept 
-        : mBuffer{initVec}, mCurrentCapacity{initVec.size()}, mNewestElementInsertionIndex{0}
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::RingBuffer(const std::vector<T, Allocator>& initVec, const Allocator& alloc) noexcept 
+        : mBuffer(initVec, alloc), mCurrentCapacity{initVec.size()}, mNewestElementInsertionIndex{0}
     {
         std::cout << "BUFFER CTOR FROM CONST REF VECTOR " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
-    template <typename T>
-    inline RingBuffer<T>::RingBuffer(std::initializer_list<T> initList) noexcept
-        : mBuffer{initList}, mCurrentCapacity{initList.size()}, mNewestElementInsertionIndex{0}
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::RingBuffer(std::initializer_list<T> initList, const Allocator& alloc) noexcept
+        : mBuffer(initList, alloc), mCurrentCapacity{initList.size()}, mNewestElementInsertionIndex{0}
     {
         std::cout << "BUFFER CTOR FROM INITIALIZER LIST " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <typename It>
-    inline RingBuffer<T>::RingBuffer(It itStart, It itEnd) noexcept 
-        : mBuffer(itStart, itEnd), mCurrentCapacity{static_cast<size_type>(std::distance(itStart, itEnd))}, mNewestElementInsertionIndex{0}
+    inline RingBuffer<T, Allocator>::RingBuffer(It itStart, It itEnd, const Allocator& alloc) noexcept 
+        : mBuffer(itStart, itEnd, alloc), mCurrentCapacity{static_cast<size_type>(std::distance(itStart, itEnd))}, mNewestElementInsertionIndex{0}
     {
         std::cout << "BUFFER CTOR FROM ITERATOR PAIR capacity " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
-    template <typename T>
-    inline RingBuffer<T>::RingBuffer(const RingBuffer& other) noexcept 
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::RingBuffer(const RingBuffer& other) noexcept 
         : mBuffer{other.mBuffer}, mCurrentCapacity{other.mCurrentCapacity}, mNewestElementInsertionIndex{other.mNewestElementInsertionIndex}
     {
         std::cout << "BUFFER COPY CTOR" <<  std::endl;
         return;
     }
 
-    template <typename T>
-    inline RingBuffer<T>::RingBuffer(RingBuffer&& other) noexcept
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::RingBuffer(RingBuffer&& other) noexcept
         : mBuffer{std::move(other.mBuffer)}, mCurrentCapacity{other.mCurrentCapacity}, mNewestElementInsertionIndex{other.mNewestElementInsertionIndex}
     {
         std::cout << "BUFFER MOVE CTOR" <<  std::endl;
@@ -317,8 +319,8 @@ namespace simpleContainers {
         return;
     }
 
-    template <typename T>
-    inline RingBuffer<T>& RingBuffer<T>::operator=(const RingBuffer& rhs) noexcept {
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>& RingBuffer<T, Allocator>::operator=(const RingBuffer& rhs) noexcept {
         std::cout << "COPY ASSIGNMENT OPERATOR" <<  std::endl;
         if (this != &rhs) {
             mBuffer = rhs.mBuffer;
@@ -329,8 +331,8 @@ namespace simpleContainers {
         return *this;
     }
 
-    template <typename T>
-    inline RingBuffer<T>& RingBuffer<T>::operator=(RingBuffer&& rhs) noexcept {
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>& RingBuffer<T, Allocator>::operator=(RingBuffer&& rhs) noexcept {
         std::cout << "MOVE ASSIGNMENT OPERATOR" <<  std::endl;
         if (this != &rhs) {
             mBuffer = std::move(rhs.mBuffer);
@@ -345,24 +347,29 @@ namespace simpleContainers {
         return *this;
     }
 
-    template <typename T>
-    inline RingBuffer<T>::~RingBuffer() noexcept {
+    template <typename T, typename Allocator>
+    inline RingBuffer<T, Allocator>::~RingBuffer() noexcept {
         std::cout << "BUFFER DTOR" << std::endl;
         return;
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::size_type RingBuffer<T>::capacity() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::allocator_type RingBuffer<T, Allocator>::get_allocator() const noexcept {
+        return mBuffer.get_allocator();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::size_type RingBuffer<T, Allocator>::capacity() const noexcept {
         return mCurrentCapacity;
     }
 
-    template <typename T>
-    inline void RingBuffer<T>::changeCapacity(const size_type newCapacity) noexcept {
+    template <typename T, typename Allocator>
+    inline void RingBuffer<T, Allocator>::changeCapacity(const size_type newCapacity) noexcept {
         if (newCapacity == mCurrentCapacity || newCapacity == 0) {
             return;
         }
 
-        std::vector<T> newBuffer;
+        std::vector<T, Allocator> newBuffer(get_allocator());
         newBuffer.reserve(newCapacity);
 
         auto it = begin();
@@ -387,34 +394,34 @@ namespace simpleContainers {
         return;
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::size_type RingBuffer<T>::size() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::size_type RingBuffer<T, Allocator>::size() const noexcept {
         return mBuffer.size();
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::size_type RingBuffer<T>::max_size() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::size_type RingBuffer<T, Allocator>::max_size() const noexcept {
         return mBuffer.max_size();
     }
 
-    template <typename T>
-    inline bool RingBuffer<T>::empty() const noexcept {
+    template <typename T, typename Allocator>
+    inline bool RingBuffer<T, Allocator>::empty() const noexcept {
         return mBuffer.empty();
     }
 
-    template <typename T>
-    inline bool RingBuffer<T>::full() const noexcept {
+    template <typename T, typename Allocator>
+    inline bool RingBuffer<T, Allocator>::full() const noexcept {
         return mBuffer.size() == mCurrentCapacity;
     }
 
-    template <typename T>
-    inline void RingBuffer<T>::clear() noexcept {
+    template <typename T, typename Allocator>
+    inline void RingBuffer<T, Allocator>::clear() noexcept {
         mNewestElementInsertionIndex = 0;
         mBuffer.clear();
     }
 
-    template <typename T>
-    inline std::vector<T> RingBuffer<T>::getElementsInInsertionOrder() const noexcept {
+    template <typename T, typename Allocator>
+    inline std::vector<T> RingBuffer<T, Allocator>::getElementsInInsertionOrder() const noexcept {
         if (mBuffer.size() < mCurrentCapacity) {
             return mBuffer;
         }
@@ -434,8 +441,8 @@ namespace simpleContainers {
         }
     }
 
-    template <typename T>
-    inline void RingBuffer<T>::push(const T& elem) {
+    template <typename T, typename Allocator>
+    inline void RingBuffer<T, Allocator>::push(const T& elem) {
         if (mBuffer.size() == mCurrentCapacity) {   // most common case
             mBuffer[mNewestElementInsertionIndex] = elem;
         }
@@ -452,8 +459,8 @@ namespace simpleContainers {
         return;
     }
 
-    template <typename T>
-    inline void RingBuffer<T>::push(T&& elem) {
+    template <typename T, typename Allocator>
+    inline void RingBuffer<T, Allocator>::push(T&& elem) {
         if (mBuffer.size() == mCurrentCapacity) {   // most common case
             mBuffer[mNewestElementInsertionIndex] = std::forward<T>(elem);
         }
@@ -470,9 +477,9 @@ namespace simpleContainers {
         return;
     }
 
-    template <typename T>
+    template <typename T, typename Allocator>
     template <typename ...Args>
-    inline void RingBuffer<T>::emplace(Args&&... args) {
+    inline void RingBuffer<T, Allocator>::emplace(Args&&... args) {
         if (mBuffer.size() == mCurrentCapacity) {   // most common case
             mBuffer[mNewestElementInsertionIndex] = T{std::forward<Args>(args)...};
         }
@@ -489,15 +496,15 @@ namespace simpleContainers {
         return;
     }
 
-    template <typename T>
-    inline void RingBuffer<T>::swap(RingBuffer<T>& other) noexcept {
+    template <typename T, typename Allocator>
+    inline void RingBuffer<T, Allocator>::swap(RingBuffer& other) noexcept {
         std::swap(mBuffer, other.mBuffer);
         std::swap(mCurrentCapacity, other.mCurrentCapacity);
         std::swap(mNewestElementInsertionIndex, other.mNewestElementInsertionIndex);
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::iterator RingBuffer<T>::begin() noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::begin() noexcept {
         if (mBuffer.size() == mCurrentCapacity) { // most common case
             return iterator{&mBuffer[mNewestElementInsertionIndex], this};
         }
@@ -510,13 +517,13 @@ namespace simpleContainers {
         return iterator{&mBuffer[0], this};
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::iterator RingBuffer<T>::end() noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::end() noexcept {
         return iterator{nullptr, this};
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::const_iterator RingBuffer<T>::begin() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::const_iterator RingBuffer<T, Allocator>::begin() const noexcept {
         if (mBuffer.size() == mCurrentCapacity) { // most common case
             return const_iterator{&mBuffer[mNewestElementInsertionIndex], this};
         }
@@ -529,28 +536,28 @@ namespace simpleContainers {
         return const_iterator{&mBuffer[0], this};
     } 
 
-    template <typename T>
-    inline typename RingBuffer<T>::const_iterator RingBuffer<T>::end() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::const_iterator RingBuffer<T, Allocator>::end() const noexcept {
         return const_iterator{nullptr, this};
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::const_iterator RingBuffer<T>::cbegin() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::const_iterator RingBuffer<T, Allocator>::cbegin() const noexcept {
         return begin();
     }
 
-    template <typename T>
-    inline typename RingBuffer<T>::const_iterator RingBuffer<T>::cend() const noexcept {
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::const_iterator RingBuffer<T, Allocator>::cend() const noexcept {
         return end();
     }
 
-    template <typename T>
-    inline bool operator==(const RingBuffer<T>& lhs, const RingBuffer<T>& rhs) noexcept {
+    template <typename T, typename Allocator>
+    inline bool operator==(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
         return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin());
     }
 
-    template <typename T>
-    inline bool operator!=(const RingBuffer<T>& lhs, const RingBuffer<T>& rhs) noexcept {
+    template <typename T, typename Allocator>
+    inline bool operator!=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
         return lhs.size() != rhs.size() || !std::equal(lhs.begin(), lhs.end(), rhs.begin());
     }
 

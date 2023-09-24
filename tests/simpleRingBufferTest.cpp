@@ -7,6 +7,7 @@
 #include "simpleContainers/simpleRingBuffer.hpp"
 
 #include "someTestClass.hpp"
+#include "someAllocatorClass.hpp"
 
 int main() {
     std::cout << "================= TESTING RING BUFFER CONSTRUCTION FOR CLASS TYPE =================" << std::endl;
@@ -14,6 +15,12 @@ int main() {
     simpleContainers::RingBuffer<SomeClass> rb1; // default ctor
     assert(rb1.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     assert(rb1.size() == 0);
+
+    SomeAllocatorClass<SomeClass> customAlloc;
+    simpleContainers::RingBuffer<SomeClass, SomeAllocatorClass<SomeClass>> rb1CustomAlloc(5, customAlloc); // default ctor with custom allocator
+    assert(rb1CustomAlloc.capacity() == 5);
+    assert(rb1CustomAlloc.size() == 0);
+    // assert(rb1CustomAlloc.get_allocator() == customAlloc);
 
     simpleContainers::RingBuffer<SomeClass> rb2 = rb1;  // copy ctor
     assert(rb2.capacity() == rb1.capacity());
