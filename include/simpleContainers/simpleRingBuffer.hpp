@@ -43,7 +43,7 @@ namespace simpleContainers {
                     using reference = typename std::conditional<constTag, typename RingBuffer<T, Allocator>::const_reference, typename RingBuffer<T, Allocator>::reference>::type;
                     using ring_buffer_ptr = typename std::conditional<constTag, const RingBuffer<T, Allocator>*, RingBuffer<T, Allocator>*>::type;
 
-                    RingBufferIterator(pointer ptr = nullptr, ring_buffer_ptr rb = nullptr) noexcept;
+                    RingBufferIterator(size_type pos = 0, ring_buffer_ptr rb = nullptr) noexcept;
                     RingBufferIterator(const RingBufferIterator& other) noexcept = default;
 
                     // coversion from non const to const iterator
@@ -64,15 +64,17 @@ namespace simpleContainers {
                     void swap(RingBufferIterator& other) noexcept;
 
                     friend bool operator==(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPtr == rhs.mPtr) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                        return (lhs.mPosition == rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
                     }
 
                     friend bool operator!=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPtr != rhs.mPtr) || (lhs.mRingBufPtr != rhs.mRingBufPtr);
+                        return (lhs.mPosition != rhs.mPosition) || (lhs.mRingBufPtr != rhs.mRingBufPtr);
                     }
 
                 private:
-                    pointer mPtr;
+                    // mPosition represents the element in order from oldest to newest inserted, it is not the actual
+                    // pointer offset position from beginning of vector
+                    size_type mPosition;
                     ring_buffer_ptr mRingBufPtr;
             };
 
@@ -143,8 +145,8 @@ namespace simpleContainers {
 namespace simpleContainers {
     template <typename T, typename Allocator>
     template <bool constTag>
-    inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(pointer ptr, ring_buffer_ptr rb) noexcept
-        : mPtr{ptr}, mRingBufPtr{rb}
+    inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(size_type pos, ring_buffer_ptr rb) noexcept
+        : mPosition{pos}, mRingBufPtr{rb}
     {
         if (constTag == true) {
             std::cout << "CONSTRUCTING CONST ITERATOR" << std::endl;
@@ -158,7 +160,7 @@ namespace simpleContainers {
     template <bool constTag> 
     template <bool C, typename> 
     inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(const RingBuffer<T, Allocator>::RingBufferIterator<false> &other) noexcept
-        : mPtr{other.mPtr}, mRingBufPtr{other.mRingBufPtr} 
+        : mPosition{other.mPosition}, mRingBufPtr{other.mRingBufPtr} 
     {
         std::cout << "converting non const iter to const iter" << std::endl;
     }
@@ -167,45 +169,24 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator*() const noexcept {
-        return *mPtr;
+        return (*mRingBufPtr)[mPosition];
     }
 
     template <typename T, typename Allocator>
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::pointer 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator->() const noexcept {
-        return mPtr;
+        return &((*mRingBufPtr)[mPosition]);
     }
 
     template <typename T, typename Allocator>
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator++() noexcept {
-        auto mBufPtr = mRingBufPtr->mBuffer.data();
-        const size_type mBufSize = mRingBufPtr->mBuffer.size();
-        const size_type mBufCapacity = mRingBufPtr->mCurrentCapacity;
-
-        ++mPtr;
-
-        if (mBufSize == mBufCapacity) {  // most common case
-            if (mPtr == mBufPtr + mBufSize) {
-                mPtr = mBufPtr;
-            }
-
-            if (mPtr == mBufPtr + mRingBufPtr->mNewestElementInsertionIndex) {
-                mPtr = nullptr;
-            }
-        }
-        else if (mBufSize == 0) {
-            mPtr = nullptr;
-        }
-        else if (mBufSize < mBufCapacity && mPtr == mBufPtr + mBufSize) {
-            mPtr = nullptr;
-        }
-
+        ++mPosition;
         return *this;
     }
-
+    
     template <typename T, typename Allocator>
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
@@ -219,32 +200,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator--() noexcept {
-        auto mBufPtr = mRingBufPtr->mBuffer.data();
-        const size_type mBufSize = mRingBufPtr->mBuffer.size();
-
-        if (mBufSize == 0) {
-            mPtr = nullptr;
-        }
-        else if (mPtr == nullptr) {
-            size_type offset = mRingBufPtr->mNewestElementInsertionIndex;
-
-            if (mBufSize == mRingBufPtr->mCurrentCapacity && offset == 0) {
-                offset = mBufSize - 1;
-            }
-            else {
-                --offset;
-            }
-
-            mPtr = mBufPtr + offset;
-        }
-        else {
-            if (mBufSize == mRingBufPtr->mCurrentCapacity && mPtr == mBufPtr) {
-                mPtr = mBufPtr + mBufSize;
-            }
-
-            --mPtr;
-        }
-
+        --mPosition;
         return *this;
     }
 
@@ -260,7 +216,7 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     template <bool constTag>
     inline void RingBuffer<T, Allocator>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
-        std::swap(mPtr, other.mPtr);
+        std::swap(mPosition, other.mPosition);
         std::swap(mRingBufPtr, other.mRingBufPtr);
         return;
     }
@@ -558,40 +514,30 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::begin() noexcept {
-        if (mBuffer.size() == mCurrentCapacity) { // most common case
-            return iterator{&mBuffer[mNewestElementInsertionIndex], this};
-        }
-        
         if (mBuffer.empty()) {
             return end();
         }
-        
-        // mBuffer is not empty but has less elements than mCurrentCapacity
-        return iterator{&mBuffer[0], this};
+
+        return iterator{0, this};
     }
 
     template <typename T, typename Allocator>
     inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::end() noexcept {
-        return iterator{nullptr, this};
+        return iterator{mBuffer.size(), this};
     }
 
     template <typename T, typename Allocator>
     inline typename RingBuffer<T, Allocator>::const_iterator RingBuffer<T, Allocator>::begin() const noexcept {
-        if (mBuffer.size() == mCurrentCapacity) { // most common case
-            return const_iterator{&mBuffer[mNewestElementInsertionIndex], this};
-        }
-        
         if (mBuffer.empty()) {
             return end();
         }
 
-        // mBuffer is not empty but has less elements than mCurrentCapacity
-        return const_iterator{&mBuffer[0], this};
+        return const_iterator{0, this};
     } 
 
     template <typename T, typename Allocator>
     inline typename RingBuffer<T, Allocator>::const_iterator RingBuffer<T, Allocator>::end() const noexcept {
-        return const_iterator{nullptr, this};
+        return const_iterator{mBuffer.size(), this};
     }
 
     template <typename T, typename Allocator>

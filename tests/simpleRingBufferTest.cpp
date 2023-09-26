@@ -288,18 +288,6 @@ int main() {
     assert(rb11.empty() && (rb11.empty() == !rb1.full()));
     assert(rb11.begin() == rb11.end());
 
-    auto itRb11EmptyBegin = rb11.begin();
-    ++itRb11EmptyBegin;
-    assert(itRb11EmptyBegin == rb11.end());
-    itRb11EmptyBegin++;
-    assert(itRb11EmptyBegin == rb11.end());
-
-    itRb11EmptyBegin = rb11.begin();
-    --itRb11EmptyBegin;
-    assert(itRb11EmptyBegin == rb11.end());
-    itRb11EmptyBegin--;
-    assert(itRb11EmptyBegin == rb11.end());
-
     std::cout << "------------------------------------------------------" << std::endl;
 
     int elemCnt = 0;
