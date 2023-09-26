@@ -116,6 +116,11 @@ namespace simpleContainers {
 
             void swap(RingBuffer& other) noexcept;
 
+            reference operator[](size_type pos) noexcept;
+            const_reference operator[](size_type pos) const noexcept;
+            reference at(size_type pos);
+            const_reference at(size_type pos) const;
+
             iterator begin() noexcept;
             iterator end() noexcept;
             const_iterator begin() const noexcept;
@@ -501,6 +506,54 @@ namespace simpleContainers {
         std::swap(mBuffer, other.mBuffer);
         std::swap(mCurrentCapacity, other.mCurrentCapacity);
         std::swap(mNewestElementInsertionIndex, other.mNewestElementInsertionIndex);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::reference RingBuffer<T, Allocator>::operator[](size_type pos) noexcept {
+        if (mBuffer.size() == mCurrentCapacity) { // most common case
+            pos += mNewestElementInsertionIndex;
+            if (pos >= mCurrentCapacity) {
+                pos -= mCurrentCapacity;
+            }
+        }
+        
+        return mBuffer[pos];
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::const_reference RingBuffer<T, Allocator>::operator[](size_type pos) const noexcept {
+        if (mBuffer.size() == mCurrentCapacity) { // most common case
+            pos += mNewestElementInsertionIndex;
+            if (pos >= mCurrentCapacity) {
+                pos -= mCurrentCapacity;
+            }
+        }
+        
+        return mBuffer[pos];
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::reference RingBuffer<T, Allocator>::at(size_type pos) {
+        if (mBuffer.size() == mCurrentCapacity) { // most common case
+            pos += mNewestElementInsertionIndex;
+            if (pos >= mCurrentCapacity) {
+                pos -= mCurrentCapacity;
+            }
+        }
+        
+        return mBuffer.at(pos);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::const_reference RingBuffer<T, Allocator>::at(size_type pos) const {
+        if (mBuffer.size() == mCurrentCapacity) { // most common case
+            pos += mNewestElementInsertionIndex;
+            if (pos >= mCurrentCapacity) {
+                pos -= mCurrentCapacity;
+            }
+        }
+        
+        return mBuffer.at(pos);
     }
 
     template <typename T, typename Allocator>

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <exception>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -164,6 +165,38 @@ int main() {
     rbResizeExpectedResult = {7, 8, 9, 10, 11};
     assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
     assert(rbResize.full());
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    // test subscript operators
+    simpleContainers::RingBuffer<int> rbSubscript(6);
+    assert(rbSubscript.empty() && rbSubscript.capacity() == 6);
+
+    // std::cout << rbSubscript[0] << std::endl;       // fails at runtime as expected (but only on msvc?)
+    // std::cout << rbSubscript.at(0) << std::endl;    // fails at runtime as expected
+
+    for (int i = 0; i < 6; ++i) { rbSubscript.emplace(i); }
+    
+    std::vector<int> rbSubscriptExpected{0, 1, 2, 3, 4, 5};
+    assert(rbSubscript.getElementsInInsertionOrder() == rbSubscriptExpected);
+    assert(rbSubscript[0] == 0 && rbSubscript[1] == 1 && rbSubscript[2] == 2
+        && rbSubscript[3] == 3 && rbSubscript[4] == 4 && rbSubscript[5] == 5);
+    assert(rbSubscript.at(0) == 0 && rbSubscript.at(1) == 1 && rbSubscript.at(2) == 2
+        && rbSubscript.at(3) == 3 && rbSubscript.at(4) == 4 && rbSubscript.at(5) == 5);
+
+    for (int i = 6; i < 9; ++i) { rbSubscript.emplace(i); }
+    rbSubscriptExpected = {3, 4, 5, 6, 7, 8};       // actual order in container {6, 7, 8, 3, 4, 5}
+    assert(rbSubscript.getElementsInInsertionOrder() == rbSubscriptExpected);
+    assert(rbSubscript[0] == 3 && rbSubscript[1] == 4 && rbSubscript[2] == 5
+        && rbSubscript[3] == 6 && rbSubscript[4] == 7 && rbSubscript[5] == 8);
+    assert(rbSubscript.at(0) == 3 && rbSubscript.at(1) == 4 && rbSubscript.at(2) == 5
+        && rbSubscript.at(3) == 6 && rbSubscript.at(4) == 7 && rbSubscript.at(5) == 8);
+
+    rbSubscript[2] = 0;
+    rbSubscript[3] = 0;
+    rbSubscript.at(4) = 0;
+    rbSubscriptExpected = {3, 4, 0, 0, 0, 8};       // actual order in container {0, 0, 8, 3, 4, 0}
+    assert(rbSubscript.getElementsInInsertionOrder() == rbSubscriptExpected);
 
     std::cout << "================= TESTING RING BUFFER INSERTION =================" << std::endl;
 
@@ -536,7 +569,7 @@ int main() {
     assert(itRb14Min != rb14Cpy.end() && *itRb14Min == -123);
     assert(itRb14Max != rb14Cpy.end() && *itRb14Max == 3426);
 
-   assert(4950 == std::accumulate(std::begin(rb14Cpy), std::end(rb14Cpy), long(0), [](long acc, long x) { return acc + x; }));
+    assert(4950 == std::accumulate(std::begin(rb14Cpy), std::end(rb14Cpy), long(0), [](long acc, long x) { return acc + x; }));
 
     std::cout << "------------------------------------------------------" << std::endl;
 
