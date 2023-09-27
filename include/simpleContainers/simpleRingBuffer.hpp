@@ -24,10 +24,10 @@ namespace simpleContainers {
             using allocator_type = Allocator;
             using reference = T&;
             using const_reference = const T&;
-            using pointer = T*;
-            using const_pointer = const T*;
-            using size_type = typename std::vector<T, Allocator>::size_type;
-            using difference_type = typename std::vector<T, Allocator>::difference_type;
+            using pointer = typename std::allocator_traits<Allocator>::pointer;
+            using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
+            using size_type = typename std::allocator_traits<Allocator>::size_type;
+            using difference_type = typename std::allocator_traits<Allocator>::difference_type;
 
             template <bool constTag = false>
             class RingBufferIterator {
@@ -45,12 +45,13 @@ namespace simpleContainers {
 
                     RingBufferIterator(size_type pos = 0, ring_buffer_ptr rb = nullptr) noexcept;
                     RingBufferIterator(const RingBufferIterator& other) noexcept = default;
-
                     // coversion from non const to const iterator
                     template <bool C = constTag, typename = typename std::enable_if<C>::type>
                     RingBufferIterator(const RingBufferIterator<false>& other) noexcept;
-
-                    // = default for other ctors and assignment?
+                    RingBufferIterator(RingBufferIterator&& other) noexcept = default;
+                    RingBufferIterator& operator=(const RingBufferIterator& rhs) noexcept = default;
+                    RingBufferIterator& operator=(RingBufferIterator&& rhs) noexcept = default;
+                    ~RingBufferIterator() noexcept = default;
 
                     void swap(RingBufferIterator& other) noexcept;
 
@@ -83,19 +84,19 @@ namespace simpleContainers {
                     }
 
                     friend bool operator<(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return lhs.mPosition < rhs.mPosition;
+                        return (lhs.mPosition < rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
                     }
 
                     friend bool operator<=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return lhs.mPosition <= rhs.mPosition;
+                        return (lhs.mPosition <= rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
                     }
 
                     friend bool operator>(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return lhs.mPosition > rhs.mPosition;
+                        return (lhs.mPosition > rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
                     }
 
                     friend bool operator>=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return lhs.mPosition >= rhs.mPosition;
+                        return (lhs.mPosition >= rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
                     }
 
                 private:

@@ -524,22 +524,6 @@ int main() {
         assert(vecRb.size() == 5 && vecRb.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     }
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
     std::cout << "================= TESTING IN STL ALGORITHMS =================" << std::endl;
 
     simpleContainers::RingBuffer<long> rb14{262, 3426, -123, 552, -91, 251, 673};
