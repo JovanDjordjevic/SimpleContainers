@@ -35,7 +35,7 @@ namespace simpleContainers {
                     friend class RingBufferIterator<false>;
                     friend class RingBufferIterator<true>;
 
-                    using iterator_category = std::bidirectional_iterator_tag;
+                    using iterator_category = std::random_access_iterator_tag;
                     using size_type = typename RingBuffer<T, Allocator>::size_type;
                     using difference_type = typename RingBuffer<T, Allocator>::difference_type;
                     using value_type = typename RingBuffer<T, Allocator>::value_type;
@@ -52,16 +52,27 @@ namespace simpleContainers {
 
                     // = default for other ctors and assignment?
 
+                    void swap(RingBufferIterator& other) noexcept;
+
                     reference operator*() const noexcept;
                     pointer operator->() const noexcept;
 
+                    reference operator[](const difference_type n) const noexcept;
+
                     RingBufferIterator& operator++() noexcept; // prefix
                     RingBufferIterator operator++(int) noexcept; // postfix
+                    RingBufferIterator& operator+=(const difference_type n) noexcept;
+                    RingBufferIterator operator+(const difference_type n) const noexcept;
+                    friend RingBufferIterator operator+(const difference_type n, RingBufferIterator rhs) noexcept {
+                        rhs += n;
+                        return rhs;
+                    }
 
                     RingBufferIterator& operator--() noexcept; // prefix
-                    RingBufferIterator operator--(int) noexcept; // postfix
-
-                    void swap(RingBufferIterator& other) noexcept;
+                    RingBufferIterator operator--(int) noexcept; // postfix  
+                    RingBufferIterator& operator-=(const difference_type n) noexcept;
+                    RingBufferIterator operator-(const difference_type n) const noexcept;
+                    difference_type operator-(const RingBufferIterator& other) const noexcept; // Subtraction between two iterators
 
                     friend bool operator==(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
                         return (lhs.mPosition == rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
@@ -69,6 +80,22 @@ namespace simpleContainers {
 
                     friend bool operator!=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
                         return (lhs.mPosition != rhs.mPosition) || (lhs.mRingBufPtr != rhs.mRingBufPtr);
+                    }
+
+                    friend bool operator<(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
+                        return lhs.mPosition < rhs.mPosition;
+                    }
+
+                    friend bool operator<=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
+                        return lhs.mPosition <= rhs.mPosition;
+                    }
+
+                    friend bool operator>(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
+                        return lhs.mPosition > rhs.mPosition;
+                    }
+
+                    friend bool operator>=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
+                        return lhs.mPosition >= rhs.mPosition;
                     }
 
                 private:
@@ -167,6 +194,14 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     template <bool constTag>
+    inline void RingBuffer<T, Allocator>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
+        std::swap(mPosition, other.mPosition);
+        std::swap(mRingBufPtr, other.mRingBufPtr);
+        return;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator*() const noexcept {
         return (*mRingBufPtr)[mPosition];
@@ -177,6 +212,13 @@ namespace simpleContainers {
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::pointer 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator->() const noexcept {
         return &((*mRingBufPtr)[mPosition]);
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator[](const difference_type n) const noexcept {
+        return (*mRingBufPtr)[mPosition + n];
     }
 
     template <typename T, typename Allocator>
@@ -199,6 +241,21 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator+=(const difference_type n) noexcept {
+        mPosition += n;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator+(const difference_type n) const noexcept {
+        return RingBufferIterator<constTag>(mPosition + n, mRingBufPtr);
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator--() noexcept {
         --mPosition;
         return *this;
@@ -215,10 +272,24 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     template <bool constTag>
-    inline void RingBuffer<T, Allocator>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
-        std::swap(mPosition, other.mPosition);
-        std::swap(mRingBufPtr, other.mRingBufPtr);
-        return;
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator-=(const difference_type n) noexcept {
+        mPosition -= n;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator-(const difference_type n) const noexcept {
+        return RingBufferIterator<constTag>(mPosition - n, mRingBufPtr);
+    }
+              
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::difference_type 
+    RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator-(const RingBufferIterator& other) const noexcept {
+        return mPosition - other.mPosition;
     }
 
     template <typename T, typename Allocator>

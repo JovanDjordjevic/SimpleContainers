@@ -470,6 +470,38 @@ int main() {
     --itRb13;                      assert(*itRb13 == 4);
     --itRb13;                      assert(itRb13 == rb13.begin());
 
+    std::cout << "------------------------------------------------------" << std::endl;
+    // testing random access for iterators
+
+    std::vector<int> rb13Expected{3, 4, 5, 6, 7};
+    assert (rb13.getElementsInInsertionOrder() == rb13Expected); // actual order in vector {6, 7, 3, 4, 5}
+
+    auto rb13rait1 = rb13.begin();      assert(*rb13rait1 == 3);
+    assert(rb13.begin() + 5 == rb13.end());
+    rb13rait1 += 3;                     assert(*rb13rait1 == 6);
+    rb13rait1 += (-1);                  assert(*rb13rait1 == 5);
+    assert(rb13rait1 + 1 == 1 + rb13rait1 && *(rb13rait1 + 1) == *(1 + rb13rait1));
+    rb13rait1 -= 1;                     assert(*rb13rait1 == 4);
+    
+    assert(rb13rait1[-1] == 3);         assert(*(rb13rait1 + (-1)) == 3);
+    assert(rb13rait1[0] == 4);          assert(*(rb13rait1 + 0) == 4);
+    assert(rb13rait1[1] == 5);          assert(*(rb13rait1 + 1) == 5);
+
+    rb13rait1 = rb13.begin();
+    auto rb13rait2 = rb13.end();
+    assert((rb13rait2 - rb13rait1) == rb13.size() && rb13rait2 == rb13rait1 + (rb13rait2 - rb13rait1));
+    assert((rb13rait1 - rb13rait2) == (-1) * rb13.size() && rb13rait1 == rb13rait2 + (rb13rait1 - rb13rait2));
+    rb13rait1 += 1;
+    auto rb13rait3 = rb13rait1 + 1;
+    rb13rait2 -= 1;
+    assert (rb13rait2 - rb13rait1 == 3);
+    assert(rb13rait1 < rb13rait2 && rb13rait2 - rb13rait1 > 0);
+    assert(!(rb13rait2 < rb13rait1));
+    assert(rb13rait1 < rb13rait3 && rb13rait3 < rb13rait2 && rb13rait1 < rb13rait2);
+    assert(rb13rait2 > rb13rait1);
+    assert(rb13rait1 <= rb13rait2 && (rb13rait1 <= rb13rait2) == !(rb13rait1 > rb13rait2));
+    assert(rb13rait2 >= rb13rait1 && (rb13rait2 >= rb13rait1) == !(rb13rait2 < rb13rait1));
+
     std::cout << "================= TESTING IN STL CONTAINERS =================" << std::endl;
 
     std::vector<simpleContainers::RingBuffer<SomeClass>> vectorOfRingBuffers;
@@ -492,7 +524,21 @@ int main() {
         assert(vecRb.size() == 5 && vecRb.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     }
 
-    // add tests for other stl containers after implementing comparisson operators
+    
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
 
     std::cout << "================= TESTING IN STL ALGORITHMS =================" << std::endl;
 
@@ -538,19 +584,29 @@ int main() {
     assert(rb14.getElementsInInsertionOrder() == rb14Expected);
 
     rb14Cpy = rb14;
-    // std::shuffle(rb14Cpy.begin(), rb14Cpy.end());   // NEEDS RANDOM ACCESS ITERATOR
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    // std::cout << "before shuffle" << std::endl;
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
+    std::shuffle(rb14Cpy.begin(), rb14Cpy.end(), generator);
+    // std::cout << "after shuffle" << std::endl;
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
 
+    rb14Cpy = rb14;
     auto itRb14Partition = std::stable_partition(rb14Cpy.begin(), rb14Cpy.end(), [](long x) {return x % 2 == 0;});
     rb14Expected = {552, 3426, 262, -91, -123, 673, 251};
     assert(rb14Cpy.getElementsInInsertionOrder() == rb14Expected);
 
-    assert(!std::is_sorted(rb14Cpy.begin(), rb14Cpy.end()));
-    // std::sort(rb14Cpy.begin(), rb14Cpy.end()); // NEEDS RANDOM ACCESS ITERATOR
-    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
-    // assert(std::is_sorted(rb14Cpy.begin(), rb14Cpy.end()));
-
     auto itRb14LowerBound = std::lower_bound(rb14Cpy.begin(), rb14Cpy.end(), 673);
     assert(itRb14LowerBound != rb14Cpy.end());
+
+    assert(!std::is_sorted(rb14Cpy.begin(), rb14Cpy.end()));
+    // std::cout << "before sort" << std::endl;
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
+    std::sort(rb14Cpy.begin(), rb14Cpy.end());
+    // std::cout << "after sort" << std::endl;
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
+    assert(std::is_sorted(rb14Cpy.begin(), rb14Cpy.end()));
 
     auto itRb14Min = std::min_element(rb14Cpy.begin(), rb14Cpy.end());
     auto itRb14Max = std::max_element(rb14Cpy.begin(), rb14Cpy.end());
