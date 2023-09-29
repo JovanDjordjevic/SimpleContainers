@@ -5,6 +5,37 @@
 #include <iostream>
 #include <vector>
 
+// This definition controls if some debug checks are made at compile and runtime
+// if the standard NDEBUG is defined or user defines SIMPLE_RING_BUFFER_NO_DEBUG during during compilation, no debug checks will be made
+#ifndef SIMPLE_RING_BUFFER_DEBUG
+    #define SIMPLE_RING_BUFFER_DEBUG
+#endif // #ifndef SIMPLE_RING_BUFFER_DEBUG
+
+#if defined NDEBUG || defined SIMPLE_RING_BUFFER_NO_DEBUG
+    #undef SIMPLE_RING_BUFFER_DEBUG
+#endif // #if defined NDEBUG || defined SIMPLE_RING_BUFFER_NO_DEBUG
+
+#ifdef SIMPLE_RING_BUFFER_DEBUG
+    #include <iostream>
+
+    #define RING_BUFFER_DEBUG_OUTPUT_STREAM std::cerr
+
+    #define RING_BUFFER_ASSERT(cond, msg) \
+        do { \
+            if (!(cond)) { \
+                RING_BUFFER_DEBUG_OUTPUT_STREAM << "\nRING BUFFER ASSERT FAILED WITH MESSAGE: " << msg \
+                    << "\nEXPECTED: " << #cond \
+                    << "\nFILE: " << __FILE__ << ", LINE " << __LINE__ << std::endl << std::endl; \
+                std::abort(); \
+            } \
+        } while(0)
+
+    #define RING_BUFFER_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
+#else
+    #define RING_BUFFER_ASSERT(cond, msg) do {} while (false)
+    #define RING_BUFFER_STATIC_ASSERT(cond, msg) ;
+#endif // #ifdef SIMPLE_RING_BUFFER_DEBUG
+
 // =============================== API ===============================
 
 namespace simpleContainers {
@@ -28,6 +59,9 @@ namespace simpleContainers {
             using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
             using size_type = typename std::allocator_traits<Allocator>::size_type;
             using difference_type = typename std::allocator_traits<Allocator>::difference_type;
+
+            RING_BUFFER_STATIC_ASSERT((!std::is_same<value_type, bool>::value), "RingBuffer<bool> currently not supported.");
+            RING_BUFFER_STATIC_ASSERT((std::is_same<value_type, typename Allocator::value_type>::value), "RingBuffer::value_type and RingBuffer::Allocator::value_type must be the same.");
 
             template <bool constTag = false>
             class RingBufferIterator {
@@ -76,27 +110,33 @@ namespace simpleContainers {
                     difference_type operator-(const RingBufferIterator& other) const noexcept; // Subtraction between two iterators
 
                     friend bool operator==(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPosition == rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                        RING_BUFFER_ASSERT(lhs.mRingBufPtr == rhs.mRingBufPtr, "RingBufferIterator == comparison must be done on iterators of the same RingBuffer");
+                        return lhs.mPosition == rhs.mPosition;
                     }
 
                     friend bool operator!=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPosition != rhs.mPosition) || (lhs.mRingBufPtr != rhs.mRingBufPtr);
+                        RING_BUFFER_ASSERT(lhs.mRingBufPtr == rhs.mRingBufPtr, "RingBufferIterator != comparison must be done on iterators of the same RingBuffer");
+                        return lhs.mPosition != rhs.mPosition;
                     }
 
                     friend bool operator<(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPosition < rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                        RING_BUFFER_ASSERT(lhs.mRingBufPtr == rhs.mRingBufPtr, "RingBufferIterator < comparison must be done on iterators of the same RingBuffer");
+                        return lhs.mPosition < rhs.mPosition;
                     }
 
                     friend bool operator<=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPosition <= rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                        RING_BUFFER_ASSERT(lhs.mRingBufPtr == rhs.mRingBufPtr, "RingBufferIterator <= comparison must be done on iterators of the same RingBuffer");
+                        return lhs.mPosition <= rhs.mPosition;
                     }
 
                     friend bool operator>(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPosition > rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                        RING_BUFFER_ASSERT(lhs.mRingBufPtr == rhs.mRingBufPtr, "RingBufferIterator > comparison must be done on iterators of the same RingBuffer");
+                        return lhs.mPosition > rhs.mPosition;
                     }
 
                     friend bool operator>=(const RingBufferIterator& lhs, const RingBufferIterator& rhs) noexcept {
-                        return (lhs.mPosition >= rhs.mPosition) && (lhs.mRingBufPtr == rhs.mRingBufPtr);
+                        RING_BUFFER_ASSERT(lhs.mRingBufPtr == rhs.mRingBufPtr, "RingBufferIterator >= comparison must be done on iterators of the same RingBuffer");
+                        return lhs.mPosition >= rhs.mPosition;
                     }
 
                 private:
@@ -205,6 +245,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator*() const noexcept {
+        RING_BUFFER_ASSERT(mRingBufPtr != nullptr, "RingBufferIterator::operator* trying to dereference mRingBufPtr which is a nullptr");
         return (*mRingBufPtr)[mPosition];
     }
 
@@ -212,6 +253,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::pointer 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator->() const noexcept {
+        RING_BUFFER_ASSERT(mRingBufPtr != nullptr, "RingBufferIterator::operator-> trying to dereference mRingBufPtr which is a nullptr");
         return &((*mRingBufPtr)[mPosition]);
     }
 
@@ -219,6 +261,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator[](const difference_type n) const noexcept {
+        RING_BUFFER_ASSERT(mRingBufPtr != nullptr, "RingBufferIterator::operator[] trying to dereference mRingBufPtr which is a nullptr");
         return (*mRingBufPtr)[mPosition + n];
     }
 
@@ -295,8 +338,9 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const Allocator& alloc) noexcept
-        : mBuffer{std::vector<T, Allocator>{alloc}}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
+        : mBuffer{std::vector<T, Allocator>{alloc}}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
     {
+        RING_BUFFER_ASSERT(initialCapacity != 0, "RingBuffer must not be constructed with initial capacity of 0");
         mBuffer.reserve(mCurrentCapacity);
         std::cout << "BUFFER CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
         return;
@@ -304,8 +348,9 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const T& val, const Allocator& alloc) noexcept
-        : mBuffer{std::vector<T, Allocator>(initialCapacity == 0 ? defaultInitialCapacity : initialCapacity, val, alloc)}, mCurrentCapacity{initialCapacity == 0 ? defaultInitialCapacity : initialCapacity}, mNewestElementInsertionIndex{0}
+        : mBuffer{std::vector<T, Allocator>(initialCapacity, val, alloc)}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
     {
+        RING_BUFFER_ASSERT(initialCapacity != 0, "RingBuffer must not be constructed with initial capacity of 0");
         mBuffer.reserve(mCurrentCapacity);
         std::cout << "BUFFER FILL CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
         return;
@@ -315,6 +360,7 @@ namespace simpleContainers {
     inline RingBuffer<T, Allocator>::RingBuffer(const std::vector<T, Allocator>& initVec, const Allocator& alloc) noexcept 
         : mBuffer(initVec, alloc), mCurrentCapacity{initVec.size()}, mNewestElementInsertionIndex{0}
     {
+        RING_BUFFER_ASSERT(initVec.size() != 0, "RingBuffer must not be constructed from an empty std::vector");
         std::cout << "BUFFER CTOR FROM CONST REF VECTOR " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
@@ -322,6 +368,7 @@ namespace simpleContainers {
     inline RingBuffer<T, Allocator>::RingBuffer(std::initializer_list<T> initList, const Allocator& alloc) noexcept
         : mBuffer(initList, alloc), mCurrentCapacity{initList.size()}, mNewestElementInsertionIndex{0}
     {
+        RING_BUFFER_ASSERT(initList.size() != 0, "RingBuffer must not be constructed from an empty std::initializer_list");
         std::cout << "BUFFER CTOR FROM INITIALIZER LIST " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
@@ -398,7 +445,9 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline void RingBuffer<T, Allocator>::changeCapacity(const size_type newCapacity) noexcept {
-        if (newCapacity == mCurrentCapacity || newCapacity == 0) {
+        RING_BUFFER_ASSERT(newCapacity != 0, "RingBuffer::changeCapacity new capacity must not be 0");
+
+        if (newCapacity == mCurrentCapacity) {
             return;
         }
 
@@ -423,7 +472,6 @@ namespace simpleContainers {
         mBuffer.swap(newBuffer);
         mNewestElementInsertionIndex = newBuffer.size() % newCapacity;
         mCurrentCapacity = newCapacity;
-
         return;
     }
 
@@ -544,7 +592,8 @@ namespace simpleContainers {
                 pos -= mCurrentCapacity;
             }
         }
-        
+
+        RING_BUFFER_ASSERT(0 <= pos && pos < mBuffer.size(), "RingBuffer subscript operator out of range");
         return mBuffer[pos];
     }
 
@@ -556,7 +605,8 @@ namespace simpleContainers {
                 pos -= mCurrentCapacity;
             }
         }
-        
+
+        RING_BUFFER_ASSERT(0 <= pos && pos < mBuffer.size(), "RingBuffer subscript operator out of range");
         return mBuffer[pos];
     }
 
@@ -568,7 +618,7 @@ namespace simpleContainers {
                 pos -= mCurrentCapacity;
             }
         }
-        
+
         return mBuffer.at(pos);
     }
 
@@ -580,7 +630,7 @@ namespace simpleContainers {
                 pos -= mCurrentCapacity;
             }
         }
-        
+
         return mBuffer.at(pos);
     }
 

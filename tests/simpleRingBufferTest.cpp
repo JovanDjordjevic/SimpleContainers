@@ -43,9 +43,10 @@ int main() {
     assert(tmpRb1.capacity() == tmpRb1InitialCapacity);
     assert(tmpRb1.size() == 0);
 
-    simpleContainers::RingBuffer<SomeClass> rbInvalidCapacity(0); // capacity ctor, if capacity is 0, default capacity will be used
-    assert(rbInvalidCapacity.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
-    assert(rbInvalidCapacity.size() == 0);
+    // fails assert as expected
+    // simpleContainers::RingBuffer<SomeClass> rbInvalidCapacity(0); // capacity ctor
+    // assert(rbInvalidCapacity.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
+    // assert(rbInvalidCapacity.size() == 0);
 
     std::vector<int> tmpVec{1, 2, 3, 4, 5};
     simpleContainers::RingBuffer<int> rbFromVec(tmpVec);    // ctor from vector
@@ -136,9 +137,10 @@ int main() {
     assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
     assert(rbResize.full());
 
-    rbResize.changeCapacity(0); // should cause no change, 0 will be ignored
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
-    assert(rbResize.full());
+    // fails assert as expected
+    // rbResize.changeCapacity(0);
+    // assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    // assert(rbResize.full());
 
     rbResize.changeCapacity(5); // should cause no change
     assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
