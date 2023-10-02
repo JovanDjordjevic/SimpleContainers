@@ -1,3 +1,6 @@
+/// @file simpleRingBuffer.hpp
+/// @brief File containing API and implementaiton of RingBuffer class
+
 #ifndef __SIMPLE_RING_BUFFER__
 #define __SIMPLE_RING_BUFFER__
 
@@ -5,9 +8,11 @@
 #include <iostream>
 #include <vector>
 
-// This definition controls if some debug checks are made at compile and runtime
-// if the standard NDEBUG is defined or user defines SIMPLE_RING_BUFFER_NO_DEBUG during during compilation, no debug checks will be made
 #ifndef SIMPLE_RING_BUFFER_DEBUG
+    /// @brief Macro for debug checks
+    /// @details This definition controls if some debug checks are made at compile and runtime. If the standard NDEBUG
+    ///          is defined or user defines SIMPLE_RING_BUFFER_NO_DEBUG during during compilation, no debug checks will be made.
+    ///          It is recomended to leave debug checks active during development, and turn them off for release builds
     #define SIMPLE_RING_BUFFER_DEBUG
 #endif // #ifndef SIMPLE_RING_BUFFER_DEBUG
 
@@ -18,6 +23,7 @@
 #ifdef SIMPLE_RING_BUFFER_DEBUG
     #include <iostream>
 
+    /// @brief Default stream where debug messages will be printed when they are enabled
     #define RING_BUFFER_DEBUG_OUTPUT_STREAM std::cerr
 
     #define RING_BUFFER_ASSERT(cond, msg) \
@@ -36,8 +42,11 @@
     #define RING_BUFFER_STATIC_ASSERT(cond, msg) ;
 #endif // #ifdef SIMPLE_RING_BUFFER_DEBUG
 
-// =============================== API ===============================
+// ============================================================================================================================================
+// =================================================================== API ====================================================================
+// ============================================================================================================================================
 
+/// @brief Namespace containing all relevant classes and functions
 namespace simpleContainers {
     template <typename T, typename Allocator>
     class RingBuffer;
@@ -48,6 +57,17 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline bool operator!=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
 
+    /// @brief Class representing a ring buffer structure
+    /// @details This is the main class the user should interact with. RingBuffer of size N will
+    ///          hold the last N inserted elements. Every insertion after the N-th will cause the oldest element to
+    ///          be dropped. Internally, it is implemented as an adaptor of std::vector. Most of the member functions
+    ///          are similar to a std::vector and have the same behavior and time complexity unless otherwise specified
+    ///          Since the size of the ring buffer is the same as it's capacity in the expected use cases,
+    ///          most of the operations are optimized for this case when possible.
+    /// @tparam T Type of object contained inside RingBuffer. T must satisfy the same requirements as
+    ///         if it was inserted into a std::vector
+    /// @tparam Allocator Allocator for said type. RingBuffer itself does not do any of the allocator calls.
+    ///         Those are done in the underlying std::vector which will use this allocator
     template <typename T, typename Allocator = std::allocator<T>>
     class RingBuffer {
         public:
@@ -63,6 +83,10 @@ namespace simpleContainers {
             RING_BUFFER_STATIC_ASSERT((!std::is_same<value_type, bool>::value), "RingBuffer<bool> currently not supported.");
             RING_BUFFER_STATIC_ASSERT((std::is_same<value_type, typename Allocator::value_type>::value), "RingBuffer::value_type and RingBuffer::Allocator::value_type must be the same.");
 
+            /// @brief Class representing iterators over RingBuffer
+            /// @details RingBugffer iterators are compliant with the LegacyRandomAccessIterator named requirement.
+            ///          All methods are O(1) time complexity
+            /// @tparam constTag Compile time indicator if iterator is a const iterator or not
             template <bool constTag = false>
             class RingBufferIterator {
                 public:
@@ -79,7 +103,9 @@ namespace simpleContainers {
 
                     RingBufferIterator(size_type pos = 0, ring_buffer_ptr rb = nullptr) noexcept;
                     RingBufferIterator(const RingBufferIterator& other) noexcept = default;
-                    // coversion from non const to const iterator
+                    /// @brief Converting constructor to create a const iterator from a non-const iterator
+                    /// @details By using SFINAE, this constructor is only available for const iterators since they must 
+                    ///          be implicitly constructible from a non-const iterator
                     template <bool C = constTag, typename = typename std::enable_if<C>::type>
                     RingBufferIterator(const RingBufferIterator<false>& other) noexcept;
                     RingBufferIterator(RingBufferIterator&& other) noexcept = default;
@@ -150,6 +176,7 @@ namespace simpleContainers {
             using const_iterator = RingBufferIterator<true>;
 
         public:
+            /// @brief RingBuffer cannot be constructed with 0 capacity so this arbitrary value was chosen as a default
             static constexpr size_type defaultInitialCapacity = 64;
 
             RingBuffer(const size_type initialCapacity = defaultInitialCapacity, const Allocator& alloc = Allocator{}) noexcept;
@@ -169,6 +196,12 @@ namespace simpleContainers {
 
             allocator_type get_allocator() const noexcept;
             size_type capacity() const noexcept;
+            /// @brief Change capacity of the current RingBuffer
+            /// @details If the new capacity is lower than the current one, then only the newest
+            ///          currentCapacity - newCapacity elements will be kept. If new capacity is greater, all elements
+            ///          are kept and no elements are dropped for the next newCapacity - currentCapacity insertions.
+            ///          In both cases this is a O(n) operation since internally a new vector containing the appropriate elements
+            ///          is created and swapped with the current internal vector.
             void changeCapacity(const size_type newCapacity) noexcept;
             size_type size() const noexcept;
             size_type max_size() const noexcept;
@@ -186,9 +219,22 @@ namespace simpleContainers {
 
             void swap(RingBuffer& other) noexcept;
 
+            /// @brief Subscript operator
+            /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
+            ///          This operator performs out of range checks for pos only when SIMPLE_RING_BUFFER_DEBUG is defined
+            /// @return Reference to element at index pos.
             reference operator[](size_type pos) noexcept;
+            /// @brief Subscript operator
+            /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
+            ///          This operator performs out of range checks for pos only when SIMPLE_RING_BUFFER_DEBUG is defined
             const_reference operator[](size_type pos) const noexcept;
+            /// @brief Access element at specified position
+            /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
+            ///          Validity of pos is always checked
             reference at(size_type pos);
+            /// @brief Access element at specified position
+            /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
+            ///          Validity of pos is always checked
             const_reference at(size_type pos) const;
 
             iterator begin() noexcept;
@@ -208,7 +254,9 @@ namespace simpleContainers {
     };
 } // namespace simpleContainers
 
-// =============================== IMPLEMENTATION ===============================
+// ============================================================================================================================================
+// ============================================================== IMPLEMENTATION ==============================================================
+// ============================================================================================================================================
 
 namespace simpleContainers {
     template <typename T, typename Allocator>

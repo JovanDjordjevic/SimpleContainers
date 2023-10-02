@@ -37,7 +37,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 if(ENABLE_DOXYGEN)
-    # To generate html report, build the 'docs' target
+    # To generate html documentation, build the 'docs' target
     include(docs)
 endif()
 
