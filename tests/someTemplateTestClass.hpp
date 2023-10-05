@@ -49,6 +49,10 @@ class SomeTemplateClass {
             return lhs.mSomeValue == rhs.mSomeValue;
         }
 
+        friend bool operator<(const SomeTemplateClass& lhs, const SomeTemplateClass& rhs) {
+            return lhs.mSomeValue < rhs.mSomeValue;
+        }
+
         friend std::ostream& operator<<(std::ostream& os, const SomeTemplateClass& sc) {
             os << sc.mSomeValue;
             return os;

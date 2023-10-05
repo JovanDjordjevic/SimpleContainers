@@ -4,6 +4,7 @@
 #ifndef __SIMPLE_RING_BUFFER__
 #define __SIMPLE_RING_BUFFER__
 
+#include <algorithm>
 #include <initializer_list>
 #include <iostream>
 #include <vector>
@@ -57,6 +58,18 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline bool operator!=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
 
+    template <typename T, typename Allocator>
+    inline bool operator<(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator<=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator>=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+
     /// @brief Class representing a ring buffer structure
     /// @details This is the main class the user should interact with. RingBuffer of size N will
     ///          hold the last N inserted elements. Every insertion after the N-th will cause the oldest element to
@@ -64,6 +77,7 @@ namespace simpleContainers {
     ///          are similar to a std::vector and have the same behavior and time complexity unless otherwise specified
     ///          Since the size of the ring buffer is the same as it's capacity in the expected use cases,
     ///          most of the operations are optimized for this case when possible.
+    ///          A strict weak ordering can be established between instances of RingBuffer, behavior is the same as std::vector
     /// @tparam T Type of object contained inside RingBuffer. T must satisfy the same requirements as
     ///         if it was inserted into a std::vector
     /// @tparam Allocator Allocator for said type. RingBuffer itself does not do any of the allocator calls.
@@ -246,6 +260,10 @@ namespace simpleContainers {
 
             friend bool operator== <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
             friend bool operator!= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+            friend bool operator< <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+            friend bool operator<= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+            friend bool operator> <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
+            friend bool operator>= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
         
         private:
             std::vector<T, Allocator> mBuffer;
@@ -728,6 +746,26 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline bool operator!=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
         return lhs.size() != rhs.size() || !std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator<(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
+        return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator<=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
+        return !(rhs < lhs);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
+        return rhs < lhs;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator>=(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept {
+        return !(lhs < rhs);
     }
 
 } // namespace simpleContainers

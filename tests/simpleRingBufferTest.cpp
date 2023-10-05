@@ -4,6 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include <set>
 #include <string>
 #include <utility>
 
@@ -284,6 +285,37 @@ int main() {
     std::vector<SomeTemplateClass<std::string>> rbWithTemplateClassExpected{SomeTemplateClass<std::string>{"someStr1"}, SomeTemplateClass<std::string>{"someStr2"}};
     assert(rbWithTemplateClass.getElementsInInsertionOrder() == rbWithTemplateClassExpected);
 
+    // test comparison operators
+
+    simpleContainers::RingBuffer<int> rbCmp1{1, 2, 3};
+    assert(rbCmp1 == rbCmp1);
+    assert(rbCmp1 >= rbCmp1);
+    assert(rbCmp1 <= rbCmp1);
+    assert(!(rbCmp1 < rbCmp1));
+    assert(!(rbCmp1 > rbCmp1));
+    simpleContainers::RingBuffer<int> rbCmp2{1, 2, 3};
+    assert(rbCmp1 == rbCmp2);
+    assert(rbCmp1 <= rbCmp2);
+    assert(rbCmp1 >= rbCmp2);
+    assert(!(rbCmp1 < rbCmp2));
+    assert(!(rbCmp1 > rbCmp2));
+
+    rbCmp2 = {2, 3, 4, 5};
+    assert(rbCmp1 != rbCmp2);
+    assert(rbCmp1 < rbCmp2 && !(rbCmp2 < rbCmp1));
+    assert(rbCmp1 <= rbCmp2);
+    
+    simpleContainers::RingBuffer<int> rbCmp3{5, 6, 7};
+    assert(rbCmp1 < rbCmp2);
+    assert(rbCmp2 < rbCmp3);
+    assert(rbCmp1 < rbCmp3);
+
+    rbCmp2 = {1, 2, 3};
+    rbCmp3 = {1, 2, 3};
+    assert(rbCmp1 == rbCmp2);
+    assert(rbCmp2 == rbCmp3);
+    assert(rbCmp1 == rbCmp3);
+
     std::cout << "================= TESTING RING BUFFER ITERATORS =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb11(10);
@@ -525,6 +557,32 @@ int main() {
     for (auto& vecRb : vectorOfRingBuffers) {
         assert(vecRb.size() == 5 && vecRb.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     }
+
+    std::set<simpleContainers::RingBuffer<SomeTemplateClass<int>>> setOfRingBuffers;
+    assert(setOfRingBuffers.empty());
+    simpleContainers::RingBuffer<SomeTemplateClass<int>> setRb1(5);
+    for (int i = 0; i < 5; ++i) { setRb1.emplace(SomeTemplateClass<int>{i}); }
+    setOfRingBuffers.emplace(setRb1);
+
+    simpleContainers::RingBuffer<SomeTemplateClass<int>> setRb2 = setRb1;
+    for (int i = 5; i < 10; ++i) { setRb2.emplace(SomeTemplateClass<int>{i}); }
+    setOfRingBuffers.emplace(setRb2);
+
+    auto setOfRingBuffersIt = setOfRingBuffers.begin();
+    assert(*setOfRingBuffersIt == setRb1);
+    ++setOfRingBuffersIt;
+    assert(*setOfRingBuffersIt == setRb2);
+
+    simpleContainers::RingBuffer<SomeTemplateClass<int>> setRb3 = {0, 0, 0};
+    setRb3.changeCapacity(2);
+    setOfRingBuffers.insert(setRb3);
+
+    setOfRingBuffersIt = setOfRingBuffers.begin();
+    assert(*setOfRingBuffersIt == setRb3);
+    ++setOfRingBuffersIt;
+    assert(*setOfRingBuffersIt == setRb1);
+    ++setOfRingBuffersIt;
+    assert(*setOfRingBuffersIt == setRb2);
 
     std::cout << "================= TESTING IN STL ALGORITHMS =================" << std::endl;
 
