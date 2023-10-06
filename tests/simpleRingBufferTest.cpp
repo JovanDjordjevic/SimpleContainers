@@ -59,7 +59,7 @@ int main() {
     simpleContainers::RingBuffer<char> rbFill(5, 'a');      // fill ctor
     assert(rbFill.size() == 5 && rbFill.capacity() == 5);
     std::vector<char> rbFillExpected(5, 'a');
-    assert(rbFill.getElementsInInsertionOrder() == rbFillExpected);
+    assert(rbFill.get_elements() == rbFillExpected);
 
     simpleContainers::RingBuffer<double> rbFromRbIterators1(tmpVec.begin(), tmpVec.end());   // iterator pair ctor
     assert(rbFromRbIterators1.size() == tmpVec.size() && rbFromRbIterators1.capacity() == tmpVec.capacity());
@@ -86,18 +86,18 @@ int main() {
 
     // swap
     simpleContainers::RingBuffer<std::string> rbSwap1(5);
-    for (int i = 0; i < 5; ++i) { rbSwap1.emplace(std::to_string(i)); }
+    for (int i = 0; i < 5; ++i) { rbSwap1.emplace_back(std::to_string(i)); }
     std::vector<std::string> rbSwap1ExpectedContents{"0", "1", "2", "3", "4"};
-    assert(rbSwap1.getElementsInInsertionOrder() == rbSwap1ExpectedContents);
+    assert(rbSwap1.get_elements() == rbSwap1ExpectedContents);
     simpleContainers::RingBuffer<std::string> rbSwap1Cpy = rbSwap1;
     assert(rbSwap1 == rbSwap1Cpy);
 
     std::cout << "------------------------------------------------------" << std::endl;
 
     simpleContainers::RingBuffer<std::string> rbSwap2(5);
-    for (int i = 5; i < 10; ++i) { rbSwap2.emplace(std::to_string(i)); }
+    for (int i = 5; i < 10; ++i) { rbSwap2.emplace_back(std::to_string(i)); }
     std::vector<std::string> rbSwap2ExpectedContents{"5", "6", "7", "8", "9"};
-    assert(rbSwap2.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
+    assert(rbSwap2.get_elements() == rbSwap2ExpectedContents);
     simpleContainers::RingBuffer<std::string> rbSwap2Cpy = rbSwap2;
     assert(rbSwap2 == rbSwap2Cpy);
 
@@ -109,8 +109,8 @@ int main() {
 
     rbSwap1.swap(rbSwap2);
     assert(rbSwap1 != rbSwap2);
-    assert(rbSwap1.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
-    assert(rbSwap2.getElementsInInsertionOrder() == rbSwap1ExpectedContents);
+    assert(rbSwap1.get_elements() == rbSwap2ExpectedContents);
+    assert(rbSwap2.get_elements() == rbSwap1ExpectedContents);
     assert(rbSwap1 != rbSwap1Cpy && rbSwap1 == rbSwap2Cpy);
     assert(rbSwap2 != rbSwap2Cpy && rbSwap2 == rbSwap1Cpy);
 
@@ -118,8 +118,8 @@ int main() {
 
     std::swap(rbSwap1, rbSwap2);
     assert(rbSwap1 != rbSwap2);
-    assert(rbSwap1.getElementsInInsertionOrder() == rbSwap1ExpectedContents);
-    assert(rbSwap2.getElementsInInsertionOrder() == rbSwap2ExpectedContents);
+    assert(rbSwap1.get_elements() == rbSwap1ExpectedContents);
+    assert(rbSwap2.get_elements() == rbSwap2ExpectedContents);
     assert(rbSwap1 == rbSwap1Cpy && rbSwap1 != rbSwap2Cpy);
     assert(rbSwap2 == rbSwap2Cpy && rbSwap2 != rbSwap1Cpy);
 
@@ -132,41 +132,41 @@ int main() {
 
     simpleContainers::RingBuffer<int> rbResize(5);
     assert(rbResize.empty() && rbResize.capacity() == 5);
-    for (int i = 1; i < 10; ++i) { rbResize.emplace(i); }
+    for (int i = 1; i < 10; ++i) { rbResize.emplace_back(i); }
 
     std::vector<int> rbResizeExpectedResult = {5, 6, 7, 8, 9};
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.full());
 
     // fails assert as expected
-    // rbResize.changeCapacity(0);
-    // assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    // rbResize.change_capacity(0);
+    // assert(rbResize.get_elements() == rbResizeExpectedResult);
     // assert(rbResize.full());
 
-    rbResize.changeCapacity(5); // should cause no change
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    rbResize.change_capacity(5); // should cause no change
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.full());
 
-    rbResize.changeCapacity(10); // should expand the capacity, and internally reorder 
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    rbResize.change_capacity(10); // should expand the capacity, and internally reorder 
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.capacity() == 10 && !rbResize.empty() && !rbResize.full());
 
-    for (int i = 1; i < 10; ++i) { rbResize.emplace(i); }
+    for (int i = 1; i < 10; ++i) { rbResize.emplace_back(i); }
     rbResizeExpectedResult = {9, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.full());
-    rbResize.emplace(10);
+    rbResize.emplace_back(10);
     rbResizeExpectedResult = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.full());
 
-    rbResize.changeCapacity(5); // should reduce the capacity, keep only 5 last inserted elements  
+    rbResize.change_capacity(5); // should reduce the capacity, keep only 5 last inserted elements  
     rbResizeExpectedResult = {6, 7, 8, 9, 10};
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.full());
-    rbResize.emplace(11);
+    rbResize.emplace_back(11);
     rbResizeExpectedResult = {7, 8, 9, 10, 11};
-    assert(rbResize.getElementsInInsertionOrder() == rbResizeExpectedResult);
+    assert(rbResize.get_elements() == rbResizeExpectedResult);
     assert(rbResize.full());
 
     std::cout << "------------------------------------------------------" << std::endl;
@@ -178,18 +178,18 @@ int main() {
     // std::cout << rbSubscript[0] << std::endl;       // fails at runtime as expected (but only on msvc?)
     // std::cout << rbSubscript.at(0) << std::endl;    // fails at runtime as expected
 
-    for (int i = 0; i < 6; ++i) { rbSubscript.emplace(i); }
+    for (int i = 0; i < 6; ++i) { rbSubscript.emplace_back(i); }
     
     std::vector<int> rbSubscriptExpected{0, 1, 2, 3, 4, 5};
-    assert(rbSubscript.getElementsInInsertionOrder() == rbSubscriptExpected);
+    assert(rbSubscript.get_elements() == rbSubscriptExpected);
     assert(rbSubscript[0] == 0 && rbSubscript[1] == 1 && rbSubscript[2] == 2
         && rbSubscript[3] == 3 && rbSubscript[4] == 4 && rbSubscript[5] == 5);
     assert(rbSubscript.at(0) == 0 && rbSubscript.at(1) == 1 && rbSubscript.at(2) == 2
         && rbSubscript.at(3) == 3 && rbSubscript.at(4) == 4 && rbSubscript.at(5) == 5);
 
-    for (int i = 6; i < 9; ++i) { rbSubscript.emplace(i); }
+    for (int i = 6; i < 9; ++i) { rbSubscript.emplace_back(i); }
     rbSubscriptExpected = {3, 4, 5, 6, 7, 8};       // actual order in container {6, 7, 8, 3, 4, 5}
-    assert(rbSubscript.getElementsInInsertionOrder() == rbSubscriptExpected);
+    assert(rbSubscript.get_elements() == rbSubscriptExpected);
     assert(rbSubscript[0] == 3 && rbSubscript[1] == 4 && rbSubscript[2] == 5
         && rbSubscript[3] == 6 && rbSubscript[4] == 7 && rbSubscript[5] == 8);
     assert(rbSubscript.at(0) == 3 && rbSubscript.at(1) == 4 && rbSubscript.at(2) == 5
@@ -199,49 +199,49 @@ int main() {
     rbSubscript[3] = 0;
     rbSubscript.at(4) = 0;
     rbSubscriptExpected = {3, 4, 0, 0, 0, 8};       // actual order in container {0, 0, 8, 3, 4, 0}
-    assert(rbSubscript.getElementsInInsertionOrder() == rbSubscriptExpected);
+    assert(rbSubscript.get_elements() == rbSubscriptExpected);
 
     std::cout << "================= TESTING RING BUFFER INSERTION =================" << std::endl;
 
     simpleContainers::RingBuffer<int> rb6(5);
 
     for(int i = 0; i < 50; ++i) {
-        rb6.push(i);
+        rb6.push_back(i);
 
         if (i == 3) {
             std::vector<int> expectedResult = {0, 1, 2, 3};
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
         else if (i == 4) {
             std::vector<int> expectedResult = {0, 1, 2, 3, 4};
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
         else if (i == 5) {
             std::vector<int> expectedResult = {1, 2, 3, 4, 5};  // true order at this time in the container is {5, 1, 2, 3, 4}
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
         else if (i == 11) {
             std::vector<int> expectedResult = {7, 8, 9, 10, 11};  // true order at this time in the container is {10, 11, 7, 8, 9};
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
         else if (i == 22) {
             std::vector<int> expectedResult = {18, 19, 20, 21, 22};  // true order at this time in the container is {20, 21, 22, 18, 19};
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
         else if (i == 38) {
             std::vector<int> expectedResult = {34, 35, 36, 37, 38};  // true order at this time in the container is {35, 36, 37, 38, 34};
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
         else if (i == 45) {
             std::vector<int> expectedResult = {41, 42, 43, 44, 45};  // true order at this time in the container is {41, 42, 43, 44, 45};
-            assert(rb6.getElementsInInsertionOrder() == expectedResult);
+            assert(rb6.get_elements() == expectedResult);
         }
     }
 
     simpleContainers::RingBuffer<SomeClass> rb7(10);
     for (int i = 0; i < 20; ++i) {
         std::cout << "-------" << std::endl;
-        rb7.push(SomeClass{i});
+        rb7.push_back(SomeClass{i});
         std::cout << "-------" << std::endl;
     }
     std::cout << "------------------------------------------------------" << std::endl;
@@ -250,7 +250,7 @@ int main() {
     for (int i = 0; i < 20; ++i) {
         std::cout << "-------" << std::endl;
         SomeClass scTmp{i};
-        rb8.push(scTmp);
+        rb8.push_back(scTmp);
         std::cout << "-------" << std::endl;
     }
     std::cout << "------------------------------------------------------" << std::endl;
@@ -259,7 +259,7 @@ int main() {
     SomeClass sc1{5};
     for (int i = 0; i < 20; ++i) {
         std::cout << "-------" << std::endl;
-        rb9.push(sc1);
+        rb9.push_back(sc1);
         std::cout << "-------" << std::endl;
     }
     std::cout << "------------------------------------------------------" << std::endl;
@@ -267,7 +267,7 @@ int main() {
     simpleContainers::RingBuffer<SomeClass> rb10(10);
     for (int i = 0; i < 25; ++i) {
         std::cout << "-------" << std::endl;
-        rb10.emplace(i);
+        rb10.emplace_back(i);
         std::cout << "-------" << std::endl;
     }
 
@@ -279,11 +279,11 @@ int main() {
 
     simpleContainers::RingBuffer<SomeTemplateClass<std::string>> rbWithTemplateClass;
     assert(rbWithTemplateClass.capacity() == simpleContainers::RingBuffer<SomeTemplateClass<std::string>>::defaultInitialCapacity);
-    rbWithTemplateClass.push(SomeTemplateClass<std::string>{"someStr1"});
-    rbWithTemplateClass.emplace("someStr2");
+    rbWithTemplateClass.push_back(SomeTemplateClass<std::string>{"someStr1"});
+    rbWithTemplateClass.emplace_back("someStr2");
     assert(rbWithTemplateClass.size() == 2);
     std::vector<SomeTemplateClass<std::string>> rbWithTemplateClassExpected{SomeTemplateClass<std::string>{"someStr1"}, SomeTemplateClass<std::string>{"someStr2"}};
-    assert(rbWithTemplateClass.getElementsInInsertionOrder() == rbWithTemplateClassExpected);
+    assert(rbWithTemplateClass.get_elements() == rbWithTemplateClassExpected);
 
     // test comparison operators
 
@@ -330,7 +330,7 @@ int main() {
 
     std::cout << "------------------------------------------------------" << std::endl;
 
-    for (int i = 0; i < 5; ++i) { rb11.emplace(i); }
+    for (int i = 0; i < 5; ++i) { rb11.emplace_back(i); }
 
     elemCnt = 0;
     for(auto& elem : rb11) {
@@ -343,7 +343,7 @@ int main() {
     std::cout << "------------------------------------------------------" << std::endl;
 
     for (int i = 5; i < 10; ++i) {
-        rb11.emplace(i); 
+        rb11.emplace_back(i); 
     }
 
     elemCnt = 0;
@@ -358,7 +358,7 @@ int main() {
     std::cout << "------------------------------------------------------" << std::endl;
 
     for (int i = 10; i < 15; ++i) {
-        rb11.emplace(i); 
+        rb11.emplace_back(i); 
     }
 
     elemCnt = 0;
@@ -368,7 +368,7 @@ int main() {
     assert(elemCnt == 10);
     assert(*(rb11.begin()) == 5);
     std::vector<int> expectedResult = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};  // true order at this time in the container is {10, 11, 12, 13, 14, 5, 6, 7, 8, 9};
-    assert(rb11.getElementsInInsertionOrder() == expectedResult);
+    assert(rb11.get_elements() == expectedResult);
 
     auto itRb11Find1 = std::find(rb11.begin(), rb11.end(), 8);
     assert(itRb11Find1 != rb11.end() && *itRb11Find1 == 8);
@@ -384,7 +384,7 @@ int main() {
     std::iter_swap(itRb11Find1, itRb11Find2);
     assert(*itRb11Find1 == 12 && *itRb11Find2 == 8);
     expectedResult = {5, 6, 7, 12, 9, 10, 11, 8, 13, 14};
-    assert(rb11.getElementsInInsertionOrder() == expectedResult);
+    assert(rb11.get_elements() == expectedResult);
 
     // test multipass
     simpleContainers::RingBuffer<int>::iterator itRb11Begin = rb11.begin();
@@ -406,7 +406,7 @@ int main() {
     simpleContainers::RingBuffer<int>::const_iterator itRbEmpty = rbEmpty.begin();
     assert(itRbEmpty == rbEmpty.end());
 
-    rbEmpty.emplace(1);
+    rbEmpty.emplace_back(1);
     itRbEmpty = rbEmpty.begin();
     assert(itRbEmpty != rbEmpty.end() && *itRbEmpty == 1);
 
@@ -447,7 +447,7 @@ int main() {
     std::cout << "------------------------------------------------------" << std::endl;
 
     simpleContainers::RingBuffer<int> rb12;
-    for (int i = 0; i < 500; ++i) { rb12.emplace(i); }
+    for (int i = 0; i < 500; ++i) { rb12.emplace_back(i); }
     for (auto& elem : rb12) { elem = 0; }
     auto itRb12End = rb12.end();
     for (auto it = rb12.begin(); it != itRb12End; ++it) { assert (*it == 0); }
@@ -463,7 +463,7 @@ int main() {
     std::cout << "------------------------------------------------------" << std::endl;
     // test bidirection
     simpleContainers::RingBuffer<int> rb13(5);
-    for (int i = 1; i < 4; ++i) { rb13.emplace(i); } // fill half
+    for (int i = 1; i < 4; ++i) { rb13.emplace_back(i); } // fill half
     assert(rb13.size() == 3 && rb13.capacity() == 5);
 
     auto itRb13 = rb13.begin();         assert(*itRb13 == 1);
@@ -474,7 +474,7 @@ int main() {
     itRb13--;                           assert(*itRb13 == 2);
     --itRb13;                           assert(itRb13 == rb13.begin());
 
-    for (int i = 4; i < 6; ++i) { rb13.emplace(i); }    // fill entire, without old value overwrite
+    for (int i = 4; i < 6; ++i) { rb13.emplace_back(i); }    // fill entire, without old value overwrite
     assert(rb13.size() == 5 && rb13.capacity() == 5);
 
     itRb13 = rb13.begin();         assert(*itRb13 == 1);
@@ -489,7 +489,7 @@ int main() {
     --itRb13;                      assert(*itRb13 == 2);
     --itRb13;                      assert(itRb13 == rb13.begin());
 
-    for (int i = 6; i < 8; ++i) { rb13.emplace(i); }    // overwrite old values
+    for (int i = 6; i < 8; ++i) { rb13.emplace_back(i); }    // overwrite old values
     assert(rb13.size() == 5 && rb13.capacity() == 5);
 
     itRb13 = rb13.begin();         assert(*itRb13 == 3);
@@ -508,7 +508,7 @@ int main() {
     // testing random access for iterators
 
     std::vector<int> rb13Expected{3, 4, 5, 6, 7};
-    assert (rb13.getElementsInInsertionOrder() == rb13Expected); // actual order in vector {6, 7, 3, 4, 5}
+    assert (rb13.get_elements() == rb13Expected); // actual order in vector {6, 7, 3, 4, 5}
 
     auto rb13rait1 = rb13.begin();      assert(*rb13rait1 == 3);
     assert(rb13.begin() + 5 == rb13.end());
@@ -549,7 +549,7 @@ int main() {
     for (auto& vecRb : vectorOfRingBuffers) {
         std::cout << "-------" << std::endl;
         for (int i = 0; i < 5; ++i) {
-            vecRb.emplace(SomeClass{i});
+            vecRb.emplace_back(SomeClass{i});
         }
         std::cout << "-------" << std::endl;
     }
@@ -561,11 +561,11 @@ int main() {
     std::set<simpleContainers::RingBuffer<SomeTemplateClass<int>>> setOfRingBuffers;
     assert(setOfRingBuffers.empty());
     simpleContainers::RingBuffer<SomeTemplateClass<int>> setRb1(5);
-    for (int i = 0; i < 5; ++i) { setRb1.emplace(SomeTemplateClass<int>{i}); }
+    for (int i = 0; i < 5; ++i) { setRb1.emplace_back(SomeTemplateClass<int>{i}); }
     setOfRingBuffers.emplace(setRb1);
 
     simpleContainers::RingBuffer<SomeTemplateClass<int>> setRb2 = setRb1;
-    for (int i = 5; i < 10; ++i) { setRb2.emplace(SomeTemplateClass<int>{i}); }
+    for (int i = 5; i < 10; ++i) { setRb2.emplace_back(SomeTemplateClass<int>{i}); }
     setOfRingBuffers.emplace(setRb2);
 
     auto setOfRingBuffersIt = setOfRingBuffers.begin();
@@ -574,7 +574,7 @@ int main() {
     assert(*setOfRingBuffersIt == setRb2);
 
     simpleContainers::RingBuffer<SomeTemplateClass<int>> setRb3 = {0, 0, 0};
-    setRb3.changeCapacity(2);
+    setRb3.change_capacity(2);
     setOfRingBuffers.insert(setRb3);
 
     setOfRingBuffersIt = setOfRingBuffers.begin();
@@ -596,9 +596,7 @@ int main() {
 
     simpleContainers::RingBuffer<long> rb14Filtered;
     assert(rb14Filtered.empty() && rb14Filtered.capacity() == simpleContainers::RingBuffer<long>::defaultInitialCapacity);
-    // std::copy_if(rb14.begin(), rb14.end(), std::back_inserter(rb14Filtered), [](long x) { return x < 0; });  // back_inserter does not work since there is no method called 'push_back'
-    // std::copy_if(rb14.begin(), rb14.end(), rb14Filtered.begin(), [](long x) { return x < 0; });      // this does not work since std::copy and copy_if do ASSIGNMENT, so values in rb14Filtered must already exist
-    // assert(rb14Filtered.size() == 2);
+    std::copy_if(rb14.begin(), rb14.end(), std::back_inserter(rb14Filtered), [](long x) { return x < 0; });
 
     auto rb14Cpy = rb14;
     std::fill(std::begin(rb14Cpy), std::end(rb14Cpy), 5);
@@ -611,21 +609,23 @@ int main() {
     std::replace_if(std::begin(rb14Cpy), std::end(rb14Cpy), [](long x) { return x > 1000; }, 1000);
     assert(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 1000) == 1);
 
-    std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
-    auto itRemoveRb14 = std::remove_if(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ return elem > 0; });  // DOES NOT BEHAVE AS EXPECTED!!!!!
-    std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });        // DOES NOT PRINT WHAT IS EXPECTED!!!!!    PRINTS: -123 -91 -123 552 -91 251 673
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
+    auto itRemoveRb14 = std::remove_if(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ return elem > 0; });
+    assert(itRemoveRb14 == rb14Cpy.begin() + 2);
+    assert(*rb14Cpy.begin() == -123 && *(rb14Cpy.begin() + 1) == -91);
+    // std::for_each(rb14Cpy.begin(), rb14Cpy.end(), [](long elem){ std::cout << elem << std::endl; });
 
     std::vector<long> rb14Expected{262, 3426, -123, 552, -91, 251, 673};
-    assert(rb14.getElementsInInsertionOrder() == rb14Expected);
+    assert(rb14.get_elements() == rb14Expected);
     std::reverse(rb14.begin(), rb14.end());
     rb14Expected = {673, 251, -91, 552, -123, 3426, 262};
-    assert(rb14.getElementsInInsertionOrder() == rb14Expected);
+    assert(rb14.get_elements() == rb14Expected);
 
     auto itRb14Find = std::find(rb14.begin(), rb14.end(), -91);
     assert(itRb14Find != rb14.end());
     std::rotate(rb14.begin(), itRb14Find, rb14.end());
     rb14Expected = {-91, 552, -123, 3426, 262, 673, 251};
-    assert(rb14.getElementsInInsertionOrder() == rb14Expected);
+    assert(rb14.get_elements() == rb14Expected);
 
     rb14Cpy = rb14;
     std::random_device rd;
@@ -639,7 +639,7 @@ int main() {
     rb14Cpy = rb14;
     auto itRb14Partition = std::stable_partition(rb14Cpy.begin(), rb14Cpy.end(), [](long x) {return x % 2 == 0;});
     rb14Expected = {552, 3426, 262, -91, -123, 673, 251};
-    assert(rb14Cpy.getElementsInInsertionOrder() == rb14Expected);
+    assert(rb14Cpy.get_elements() == rb14Expected);
 
     auto itRb14LowerBound = std::lower_bound(rb14Cpy.begin(), rb14Cpy.end(), 673);
     assert(itRb14LowerBound != rb14Cpy.end());

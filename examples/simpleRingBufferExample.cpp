@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <random>
+#include <sstream>
 #include <string>
 
 #include "simpleContainers/simpleRingBuffer.hpp"
@@ -35,7 +37,7 @@ int main() {
     // notice that after the 10th iteration, the oldest elements are no longer there, and new elements are inserted
     for (int i = 0; i < 20; ++i) {
         // "sleep 1s"
-        rb1.push(distr(generator)); // an emplace method also exists, similar behavior to a std::vector
+        rb1.push_back(distr(generator)); // an emplace_back method also exists, similar behavior to a std::vector
         printRingBuffer(rb1);
     }
 
@@ -45,12 +47,12 @@ int main() {
     std::cout << "rb1 can currently hold a maximum of " << rb1.capacity() << " elements" << std::endl;
 
     // If size is decreased from N to M, then the oldest N-M elements will be dropped.
-    rb1.changeCapacity(5);
+    rb1.change_capacity(5);
     std::cout << "rb1 can currently hold a maximum of " << rb1.capacity() << " elements" << std::endl;
     printRingBuffer(rb1);
 
     // If size is increased from N to M then no old elements will be dropped for the next M-N insertions (untill the ring buffer is filled again)
-    rb1.changeCapacity(15);
+    rb1.change_capacity(15);
     std::cout << "rb1 can currently hold a maximum of " << rb1.capacity() << " elements" << std::endl;
     printRingBuffer(rb1);
 
@@ -80,6 +82,14 @@ int main() {
 
     std::sort(rb2.begin(), rb2.end());
     printRingBuffer(rb2);
+
+    // RingBuffer can be used with a std::back_inserter
+    std::string input = "1 2 3 4 5 6 7 8 9 10";
+    std::istringstream iss{input};
+
+    simpleContainers::RingBuffer<int> rb3(5);
+    std::copy(std::istream_iterator<int>(iss), std::istream_iterator<int>(), std::back_inserter(rb3));
+    printRingBuffer(rb3);
 
     return 0;
 }

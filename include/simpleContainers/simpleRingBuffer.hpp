@@ -89,13 +89,13 @@ namespace simpleContainers {
             using allocator_type = Allocator;
             using reference = T&;
             using const_reference = const T&;
-            using pointer = typename std::allocator_traits<Allocator>::pointer;
-            using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
-            using size_type = typename std::allocator_traits<Allocator>::size_type;
-            using difference_type = typename std::allocator_traits<Allocator>::difference_type;
+            using pointer = typename std::allocator_traits<allocator_type>::pointer;
+            using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer;
+            using size_type = typename std::allocator_traits<allocator_type>::size_type;
+            using difference_type = typename std::allocator_traits<allocator_type>::difference_type;
 
             RING_BUFFER_STATIC_ASSERT((!std::is_same<value_type, bool>::value), "RingBuffer<bool> currently not supported.");
-            RING_BUFFER_STATIC_ASSERT((std::is_same<value_type, typename Allocator::value_type>::value), "RingBuffer::value_type and RingBuffer::Allocator::value_type must be the same.");
+            RING_BUFFER_STATIC_ASSERT((std::is_same<value_type, typename allocator_type::value_type>::value), "RingBuffer::value_type and RingBuffer::Allocator::value_type must be the same.");
 
             /// @brief Class representing iterators over RingBuffer
             /// @details RingBugffer iterators are compliant with the LegacyRandomAccessIterator named requirement.
@@ -193,12 +193,12 @@ namespace simpleContainers {
             /// @brief RingBuffer cannot be constructed with 0 capacity so this arbitrary value was chosen as a default
             static constexpr size_type defaultInitialCapacity = 64;
 
-            RingBuffer(const size_type initialCapacity = defaultInitialCapacity, const Allocator& alloc = Allocator{}) noexcept;
-            RingBuffer(const size_type initialCapacity, const T& val, const Allocator& alloc = Allocator{}) noexcept;
-            RingBuffer(const std::vector<T, Allocator>& initVec, const Allocator& alloc = Allocator{}) noexcept;
-            RingBuffer(std::initializer_list<T> initList, const Allocator& alloc = Allocator{}) noexcept;
-            template <typename It>
-            RingBuffer(It itStart, It itEnd, const Allocator& alloc = Allocator{}) noexcept;
+            RingBuffer(const size_type initialCapacity = defaultInitialCapacity, const allocator_type& alloc = allocator_type{}) noexcept;
+            RingBuffer(const size_type initialCapacity, const value_type& val, const allocator_type& alloc = allocator_type{}) noexcept;
+            RingBuffer(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc = allocator_type{}) noexcept;
+            RingBuffer(std::initializer_list<value_type> initList, const allocator_type& alloc = allocator_type{}) noexcept;
+            template <typename Iterator>
+            RingBuffer(Iterator itStart, Iterator itEnd, const allocator_type& alloc = allocator_type{}) noexcept;
 
             RingBuffer(const RingBuffer& other) noexcept;   // = default;
             RingBuffer(RingBuffer&& other) noexcept;   // = default;
@@ -216,20 +216,20 @@ namespace simpleContainers {
             ///          are kept and no elements are dropped for the next newCapacity - currentCapacity insertions.
             ///          In both cases this is a O(n) operation since internally a new vector containing the appropriate elements
             ///          is created and swapped with the current internal vector.
-            void changeCapacity(const size_type newCapacity) noexcept;
+            void change_capacity(const size_type newCapacity) noexcept;
             size_type size() const noexcept;
             size_type max_size() const noexcept;
             bool empty() const noexcept;
             bool full() const noexcept;
             void clear() noexcept;
 
-            std::vector<T> getElementsInInsertionOrder() const noexcept;
+            /// @brief Get elements in RingBuffer in order they were inserted (oldest first)
+            std::vector<value_type> get_elements() const noexcept;
 
-            void push(const T& elem);
-            void push(T&& elem);
-
+            void push_back(const value_type& elem);
+            void push_back(value_type&& elem);
             template <typename ...Args>
-            void emplace(Args&&... args);
+            void emplace_back(Args&&... args);
 
             void swap(RingBuffer& other) noexcept;
 
@@ -266,7 +266,7 @@ namespace simpleContainers {
             friend bool operator>= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
         
         private:
-            std::vector<T, Allocator> mBuffer;
+            std::vector<value_type, allocator_type> mBuffer;
             size_type mCurrentCapacity;
             size_type mNewestElementInsertionIndex;
     };
@@ -403,8 +403,8 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const Allocator& alloc) noexcept
-        : mBuffer{std::vector<T, Allocator>{alloc}}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
+    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const allocator_type& alloc) noexcept
+        : mBuffer{std::vector<value_type, allocator_type>{alloc}}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initialCapacity != 0, "RingBuffer must not be constructed with initial capacity of 0");
         mBuffer.reserve(mCurrentCapacity);
@@ -413,8 +413,8 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const T& val, const Allocator& alloc) noexcept
-        : mBuffer{std::vector<T, Allocator>(initialCapacity, val, alloc)}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
+    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const value_type& val, const allocator_type& alloc) noexcept
+        : mBuffer{std::vector<value_type, allocator_type>(initialCapacity, val, alloc)}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initialCapacity != 0, "RingBuffer must not be constructed with initial capacity of 0");
         mBuffer.reserve(mCurrentCapacity);
@@ -423,7 +423,7 @@ namespace simpleContainers {
     }
     
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const std::vector<T, Allocator>& initVec, const Allocator& alloc) noexcept 
+    inline RingBuffer<T, Allocator>::RingBuffer(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc) noexcept 
         : mBuffer(initVec, alloc), mCurrentCapacity{initVec.size()}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initVec.size() != 0, "RingBuffer must not be constructed from an empty std::vector");
@@ -431,7 +431,7 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(std::initializer_list<T> initList, const Allocator& alloc) noexcept
+    inline RingBuffer<T, Allocator>::RingBuffer(std::initializer_list<value_type> initList, const allocator_type& alloc) noexcept
         : mBuffer(initList, alloc), mCurrentCapacity{initList.size()}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initList.size() != 0, "RingBuffer must not be constructed from an empty std::initializer_list");
@@ -439,8 +439,8 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    template <typename It>
-    inline RingBuffer<T, Allocator>::RingBuffer(It itStart, It itEnd, const Allocator& alloc) noexcept 
+    template <typename Iterator>
+    inline RingBuffer<T, Allocator>::RingBuffer(Iterator itStart, Iterator itEnd, const allocator_type& alloc) noexcept 
         : mBuffer(itStart, itEnd, alloc), mCurrentCapacity{static_cast<size_type>(std::distance(itStart, itEnd))}, mNewestElementInsertionIndex{0}
     {
         std::cout << "BUFFER CTOR FROM ITERATOR PAIR capacity " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
@@ -510,14 +510,14 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline void RingBuffer<T, Allocator>::changeCapacity(const size_type newCapacity) noexcept {
-        RING_BUFFER_ASSERT(newCapacity != 0, "RingBuffer::changeCapacity new capacity must not be 0");
+    inline void RingBuffer<T, Allocator>::change_capacity(const size_type newCapacity) noexcept {
+        RING_BUFFER_ASSERT(newCapacity != 0, "RingBuffer::change_capacity new capacity must not be 0");
 
         if (newCapacity == mCurrentCapacity) {
             return;
         }
 
-        std::vector<T, Allocator> newBuffer(get_allocator());
+        std::vector<value_type, allocator_type> newBuffer(get_allocator());
         newBuffer.reserve(newCapacity);
 
         auto it = begin();
@@ -568,12 +568,12 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline std::vector<T> RingBuffer<T, Allocator>::getElementsInInsertionOrder() const noexcept {
+    inline std::vector<typename RingBuffer<T, Allocator>::value_type> RingBuffer<T, Allocator>::get_elements() const noexcept {
         if (mBuffer.size() < mCurrentCapacity) {
             return mBuffer;
         }
         else {
-            std::vector<T> result;
+            std::vector<value_type> result;
             result.reserve(mCurrentCapacity);
 
             for (size_type i = mNewestElementInsertionIndex; i < mCurrentCapacity; ++i) {
@@ -589,7 +589,7 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline void RingBuffer<T, Allocator>::push(const T& elem) {
+    inline void RingBuffer<T, Allocator>::push_back(const value_type& elem) {
         if (mBuffer.size() == mCurrentCapacity) {   // most common case
             mBuffer[mNewestElementInsertionIndex] = elem;
         }
@@ -607,12 +607,12 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline void RingBuffer<T, Allocator>::push(T&& elem) {
+    inline void RingBuffer<T, Allocator>::push_back(value_type&& elem) {
         if (mBuffer.size() == mCurrentCapacity) {   // most common case
-            mBuffer[mNewestElementInsertionIndex] = std::forward<T>(elem);
+            mBuffer[mNewestElementInsertionIndex] = std::forward<value_type>(elem);
         }
         else if (mBuffer.size() < mCurrentCapacity) { // only happens during the initial filling
-            mBuffer.push_back(std::forward<T>(elem));
+            mBuffer.push_back(std::forward<value_type>(elem));
         }
 
         ++mNewestElementInsertionIndex;
@@ -626,7 +626,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     template <typename ...Args>
-    inline void RingBuffer<T, Allocator>::emplace(Args&&... args) {
+    inline void RingBuffer<T, Allocator>::emplace_back(Args&&... args) {
         if (mBuffer.size() == mCurrentCapacity) {   // most common case
             mBuffer[mNewestElementInsertionIndex] = T{std::forward<Args>(args)...};
         }
