@@ -11,7 +11,7 @@ Tested on the following compilers:
 
 Currently implemented containers:
 
-- **RingBuffer** - a structure that holds only the last N inserted elements (overwrites the oldest element whenever a new one is inserted when maximum capacity is reached)
+- **RingBuffer\<T\>** - a structure that holds only the last N inserted elements of type T (overwrites the oldest element whenever a new one is inserted when maximum capacity is reached) (at this time, T = bool is not supported)
 
 Usage examples can be found in the [examples](https://github.com/JovanDjordjevic/SimpleContainers/blob/main/examples) folder
 
