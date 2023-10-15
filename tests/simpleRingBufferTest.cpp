@@ -171,6 +171,95 @@ int main() {
 
     std::cout << "------------------------------------------------------" << std::endl;
 
+    // test erasure when ring buffer is not full
+    simpleContainers::RingBuffer<int> rbErase1(20);
+    for (int i = 0; i < 10; ++i) { rbErase1.emplace_back(i); }
+    assert(rbErase1.size() == 10 && rbErase1.capacity() == 20);
+
+    auto rbErase1It = rbErase1.erase(rbErase1.begin() + 3);
+    std::vector<int> rbErase1Expected{0, 1, 2, 4, 5, 6, 7, 8, 9};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+    assert(*rbErase1It == 4);
+
+    rbErase1.emplace_back(10);
+    rbErase1Expected = {0, 1, 2, 4, 5, 6, 7, 8, 9, 10};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+
+    rbErase1It = rbErase1.erase(rbErase1.end() - 1);
+    rbErase1Expected = {0, 1, 2, 4, 5, 6, 7, 8, 9};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+    assert(rbErase1It == rbErase1.end());
+
+    rbErase1.emplace_back(11);
+    rbErase1Expected = {0, 1, 2, 4, 5, 6, 7, 8, 9, 11};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+
+    rbErase1It = rbErase1.erase(rbErase1.begin() + 4, rbErase1.begin() + 7);
+    rbErase1Expected = {0, 1, 2, 4, 8, 9, 11};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+    assert(*rbErase1It == 8);
+
+    rbErase1It = rbErase1.erase(rbErase1.end() - 3, rbErase1.end());
+    rbErase1Expected = {0, 1, 2, 4};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+    assert(rbErase1It == rbErase1.end());
+
+    rbErase1.emplace_back(12);
+    rbErase1Expected = {0, 1, 2, 4, 12};
+    assert(rbErase1.get_elements() == rbErase1Expected);
+
+    std::cout << "------------------------------------------------------" << std::endl;
+
+    // test erasure when ring buffer is full and next insertion index is somewhere in the middle of the internal vector
+    simpleContainers::RingBuffer<int> rbErase2Original(10);
+    for (int i = 0; i < 15; ++i) { rbErase2Original.emplace_back(i); }
+    assert(rbErase2Original.size() == rbErase2Original.capacity());
+    
+    simpleContainers::RingBuffer<int> rbErase2 = rbErase2Original;
+
+    std::vector<int> rbErase2Expected{5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+
+    auto rbErase2It = rbErase2.erase(rbErase2.begin() + 6);
+    rbErase2Expected = {5, 6, 7, 8, 9, 10, 12, 13, 14};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+    assert(*rbErase2It == 12);
+
+    for(int i = 15; i < 17; ++i) { rbErase2.push_back(i); }
+    rbErase2Expected = {6, 7, 8, 9, 10, 12, 13, 14, 15, 16};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+
+    rbErase2It = rbErase2.erase(rbErase2.end() - 1);
+    rbErase2Expected = {6, 7, 8, 9, 10, 12, 13, 14, 15};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+    assert(rbErase2It == rbErase2.end());
+    rbErase2It = rbErase2.erase(rbErase2.end() - 1);
+    rbErase2Expected = {6, 7, 8, 9, 10, 12, 13, 14};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+    assert(rbErase2It == rbErase2.end());
+
+    rbErase2 = rbErase2Original;
+    rbErase2It = rbErase2.erase(rbErase2.begin() + 2, rbErase2.begin() + 8);
+    rbErase2Expected = {5, 6, 13, 14};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+    assert(*rbErase2It == 13);
+    
+    rbErase2.emplace_back(15);
+    rbErase2Expected = {5, 6, 13, 14, 15};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+
+    rbErase2It = rbErase2.erase(rbErase2.begin() + 3, rbErase2.end());
+    rbErase2Expected = {5, 6, 13};
+    assert(rbErase2.get_elements() == rbErase2Expected);
+    assert(rbErase2It == rbErase2.end());
+
+    rbErase2It = rbErase2.erase(rbErase2.begin(), rbErase2.end());
+    assert(rbErase2.empty());
+    assert(rbErase2It == rbErase2.end());
+
+    
+    std::cout << "------------------------------------------------------" << std::endl;
+
     // test subscript operators
     simpleContainers::RingBuffer<int> rbSubscript(6);
     assert(rbSubscript.empty() && rbSubscript.capacity() == 6);

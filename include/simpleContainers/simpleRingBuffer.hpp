@@ -233,6 +233,13 @@ namespace simpleContainers {
 
             void swap(RingBuffer& other) noexcept;
 
+            /// @brief Erase element at given iterator
+            /// @return Iterator to element that comes aftr the erased element (or end iterator if erased element was the last one)
+            iterator erase(const_iterator it) noexcept;
+            /// @brief Erase elements in iterator range [first, last)
+            /// @return Iterator to element that comes aftr the last erased element (or end iterator if no elements exist after last)
+            iterator erase(const_iterator first, const_iterator last) noexcept;
+
             /// @brief Subscript operator
             /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
             ///          This operator performs out of range checks for pos only when SIMPLE_RING_BUFFER_DEBUG is defined
@@ -264,7 +271,7 @@ namespace simpleContainers {
             friend bool operator<= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
             friend bool operator> <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
             friend bool operator>= <>(const RingBuffer<T, Allocator>& lhs, const RingBuffer<T, Allocator>& rhs) noexcept;
-        
+
         private:
             std::vector<value_type, allocator_type> mBuffer;
             size_type mCurrentCapacity;
@@ -648,6 +655,28 @@ namespace simpleContainers {
         std::swap(mBuffer, other.mBuffer);
         std::swap(mCurrentCapacity, other.mCurrentCapacity);
         std::swap(mNewestElementInsertionIndex, other.mNewestElementInsertionIndex);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::erase(const_iterator it) noexcept {
+        // reorder the internal vector so that it's erase method may be used
+        std::rotate(mBuffer.begin(), mBuffer.begin() + mNewestElementInsertionIndex, mBuffer.end());
+        auto dist = it - cbegin();
+        mBuffer.erase(mBuffer.begin() + dist);
+        mNewestElementInsertionIndex = mBuffer.size();
+        return iterator{static_cast<typename iterator::size_type>(dist), this};
+    }
+
+    template <typename T, typename Allocator>
+    inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::erase(const_iterator first, const_iterator last) noexcept {
+        RING_BUFFER_ASSERT((last - first) >= 0, "Iterator to last element cannot be before iterator to first element");
+        // reorder the internal vector so that it's erase method may be used
+        std::rotate(mBuffer.begin(), mBuffer.begin() + mNewestElementInsertionIndex, mBuffer.end());
+        auto distFirst = first - cbegin();
+        auto distLast = last - cbegin();
+        mBuffer.erase(mBuffer.begin() + distFirst, mBuffer.begin() + distLast);
+        mNewestElementInsertionIndex = mBuffer.size();
+        return iterator{static_cast<typename iterator::size_type>(distFirst), this};
     }
 
     template <typename T, typename Allocator>
