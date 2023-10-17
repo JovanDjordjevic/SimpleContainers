@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <initializer_list>
-#include <iostream>
 #include <vector>
 
 #ifndef SIMPLE_RING_BUFFER_DEBUG
@@ -193,20 +192,20 @@ namespace simpleContainers {
             /// @brief RingBuffer cannot be constructed with 0 capacity so this arbitrary value was chosen as a default
             static constexpr size_type defaultInitialCapacity = 64;
 
-            RingBuffer(const size_type initialCapacity = defaultInitialCapacity, const allocator_type& alloc = allocator_type{}) noexcept;
-            RingBuffer(const size_type initialCapacity, const value_type& val, const allocator_type& alloc = allocator_type{}) noexcept;
-            RingBuffer(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc = allocator_type{}) noexcept;
-            RingBuffer(std::initializer_list<value_type> initList, const allocator_type& alloc = allocator_type{}) noexcept;
+            RingBuffer(const size_type initialCapacity = defaultInitialCapacity, const allocator_type& alloc = allocator_type{});
+            RingBuffer(const size_type initialCapacity, const value_type& val, const allocator_type& alloc = allocator_type{});
+            RingBuffer(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc = allocator_type{});
+            RingBuffer(std::initializer_list<value_type> initList, const allocator_type& alloc = allocator_type{});
             template <typename Iterator>
-            RingBuffer(Iterator itStart, Iterator itEnd, const allocator_type& alloc = allocator_type{}) noexcept;
+            RingBuffer(Iterator itStart, Iterator itEnd, const allocator_type& alloc = allocator_type{});
 
-            RingBuffer(const RingBuffer& other) noexcept;   // = default;
-            RingBuffer(RingBuffer&& other) noexcept;   // = default;
+            RingBuffer(const RingBuffer& other) = default;
+            RingBuffer(RingBuffer&& other) noexcept = default;
 
-            RingBuffer& operator=(const RingBuffer& rhs) noexcept;   // = default;
-            RingBuffer& operator=(RingBuffer&& rhs) noexcept;   // = default;
+            RingBuffer& operator=(const RingBuffer& rhs) = default;
+            RingBuffer& operator=(RingBuffer&& rhs) noexcept = default;
 
-            ~RingBuffer() noexcept;   // = default;
+            ~RingBuffer() noexcept = default;
 
             allocator_type get_allocator() const noexcept;
             size_type capacity() const noexcept;
@@ -244,19 +243,19 @@ namespace simpleContainers {
             /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
             ///          This operator performs out of range checks for pos only when SIMPLE_RING_BUFFER_DEBUG is defined
             /// @return Reference to element at index pos.
-            reference operator[](size_type pos) noexcept;
+            reference operator[](const size_type& pos) noexcept;
             /// @brief Subscript operator
             /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
             ///          This operator performs out of range checks for pos only when SIMPLE_RING_BUFFER_DEBUG is defined
-            const_reference operator[](size_type pos) const noexcept;
+            const_reference operator[](const size_type& pos) const noexcept;
             /// @brief Access element at specified position
             /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
             ///          Validity of pos is always checked
-            reference at(size_type pos);
+            reference at(const size_type& pos);
             /// @brief Access element at specified position
             /// @details Indexing is done in insertion order, so the oldest element will be at position 0, the second oldest at position 1 etc.
             ///          Validity of pos is always checked
-            const_reference at(size_type pos) const;
+            const_reference at(const size_type& pos) const;
 
             iterator begin() noexcept;
             iterator end() noexcept;
@@ -288,30 +287,20 @@ namespace simpleContainers {
     template <bool constTag>
     inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(size_type pos, ring_buffer_ptr rb) noexcept
         : mPosition{pos}, mRingBufPtr{rb}
-    {
-        if (constTag == true) {
-            std::cout << "CONSTRUCTING CONST ITERATOR" << std::endl;
-        }
-        else {
-            std::cout << "CONSTRUCTING NON CONST ITERATOR" << std::endl;
-        }
-    }
+    {}
 
     template <typename T, typename Allocator>
     template <bool constTag> 
     template <bool C, typename> 
     inline RingBuffer<T, Allocator>::RingBufferIterator<constTag>::RingBufferIterator(const RingBuffer<T, Allocator>::RingBufferIterator<false> &other) noexcept
         : mPosition{other.mPosition}, mRingBufPtr{other.mRingBufPtr} 
-    {
-        std::cout << "converting non const iter to const iter" << std::endl;
-    }
+    {}
 
     template <typename T, typename Allocator>
     template <bool constTag>
     inline void RingBuffer<T, Allocator>::RingBufferIterator<constTag>::swap(RingBufferIterator& other) noexcept {
         std::swap(mPosition, other.mPosition);
         std::swap(mRingBufPtr, other.mRingBufPtr);
-        return;
     }
 
     template <typename T, typename Allocator>
@@ -410,100 +399,41 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const allocator_type& alloc) noexcept
+    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const allocator_type& alloc)
         : mBuffer{std::vector<value_type, allocator_type>{alloc}}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initialCapacity != 0, "RingBuffer must not be constructed with initial capacity of 0");
         mBuffer.reserve(mCurrentCapacity);
-        std::cout << "BUFFER CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
-        return;
     }
 
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const value_type& val, const allocator_type& alloc) noexcept
+    inline RingBuffer<T, Allocator>::RingBuffer(const size_type initialCapacity, const value_type& val, const allocator_type& alloc)
         : mBuffer{std::vector<value_type, allocator_type>(initialCapacity, val, alloc)}, mCurrentCapacity{initialCapacity}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initialCapacity != 0, "RingBuffer must not be constructed with initial capacity of 0");
         mBuffer.reserve(mCurrentCapacity);
-        std::cout << "BUFFER FILL CTOR WITH CAPACITY " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
-        return;
     }
     
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc) noexcept 
+    inline RingBuffer<T, Allocator>::RingBuffer(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc)
         : mBuffer(initVec, alloc), mCurrentCapacity{initVec.size()}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initVec.size() != 0, "RingBuffer must not be constructed from an empty std::vector");
-        std::cout << "BUFFER CTOR FROM CONST REF VECTOR " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
     template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(std::initializer_list<value_type> initList, const allocator_type& alloc) noexcept
+    inline RingBuffer<T, Allocator>::RingBuffer(std::initializer_list<value_type> initList, const allocator_type& alloc)
         : mBuffer(initList, alloc), mCurrentCapacity{initList.size()}, mNewestElementInsertionIndex{0}
     {
         RING_BUFFER_ASSERT(initList.size() != 0, "RingBuffer must not be constructed from an empty std::initializer_list");
-        std::cout << "BUFFER CTOR FROM INITIALIZER LIST " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
     }
 
     template <typename T, typename Allocator>
     template <typename Iterator>
-    inline RingBuffer<T, Allocator>::RingBuffer(Iterator itStart, Iterator itEnd, const allocator_type& alloc) noexcept 
+    inline RingBuffer<T, Allocator>::RingBuffer(Iterator itStart, Iterator itEnd, const allocator_type& alloc)
         : mBuffer(itStart, itEnd, alloc), mCurrentCapacity{static_cast<size_type>(std::distance(itStart, itEnd))}, mNewestElementInsertionIndex{0}
     {
-        std::cout << "BUFFER CTOR FROM ITERATOR PAIR capacity " << mCurrentCapacity << " mBuffer capacity " << mBuffer.capacity() <<  std::endl;
-    }
-
-    template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(const RingBuffer& other) noexcept 
-        : mBuffer{other.mBuffer}, mCurrentCapacity{other.mCurrentCapacity}, mNewestElementInsertionIndex{other.mNewestElementInsertionIndex}
-    {
-        std::cout << "BUFFER COPY CTOR" <<  std::endl;
-        return;
-    }
-
-    template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::RingBuffer(RingBuffer&& other) noexcept
-        : mBuffer{std::move(other.mBuffer)}, mCurrentCapacity{other.mCurrentCapacity}, mNewestElementInsertionIndex{other.mNewestElementInsertionIndex}
-    {
-        std::cout << "BUFFER MOVE CTOR" <<  std::endl;
-        other.mBuffer = {};
-        other.mCurrentCapacity = 0;
-        other.mNewestElementInsertionIndex = 0;
-        return;
-    }
-
-    template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>& RingBuffer<T, Allocator>::operator=(const RingBuffer& rhs) noexcept {
-        std::cout << "COPY ASSIGNMENT OPERATOR" <<  std::endl;
-        if (this != &rhs) {
-            mBuffer = rhs.mBuffer;
-            mCurrentCapacity = rhs.mCurrentCapacity;
-            mNewestElementInsertionIndex = rhs.mNewestElementInsertionIndex;
-        }
-
-        return *this;
-    }
-
-    template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>& RingBuffer<T, Allocator>::operator=(RingBuffer&& rhs) noexcept {
-        std::cout << "MOVE ASSIGNMENT OPERATOR" <<  std::endl;
-        if (this != &rhs) {
-            mBuffer = std::move(rhs.mBuffer);
-            rhs.mBuffer = {};
-
-            mCurrentCapacity = rhs.mCurrentCapacity;
-            rhs.mCurrentCapacity = 0;
-            mNewestElementInsertionIndex = rhs.mNewestElementInsertionIndex;
-            rhs.mNewestElementInsertionIndex = 0;
-        }
-
-        return *this;
-    }
-
-    template <typename T, typename Allocator>
-    inline RingBuffer<T, Allocator>::~RingBuffer() noexcept {
-        std::cout << "BUFFER DTOR" << std::endl;
-        return;
+        RING_BUFFER_ASSERT(std::distance(itStart, itEnd) >= 0, "Distance between iterators cannot be negative");
     }
 
     template <typename T, typename Allocator>
@@ -545,7 +475,6 @@ namespace simpleContainers {
         mBuffer.swap(newBuffer);
         mNewestElementInsertionIndex = newBuffer.size() % newCapacity;
         mCurrentCapacity = newCapacity;
-        return;
     }
 
     template <typename T, typename Allocator>
@@ -609,8 +538,6 @@ namespace simpleContainers {
         if (mNewestElementInsertionIndex == mCurrentCapacity) {
             mNewestElementInsertionIndex = 0;
         }
-
-        return;
     }
 
     template <typename T, typename Allocator>
@@ -627,8 +554,6 @@ namespace simpleContainers {
         if (mNewestElementInsertionIndex == mCurrentCapacity) {
             mNewestElementInsertionIndex = 0;
         }
-
-        return;
     }
 
     template <typename T, typename Allocator>
@@ -646,8 +571,6 @@ namespace simpleContainers {
         if (mNewestElementInsertionIndex == mCurrentCapacity) {
             mNewestElementInsertionIndex = 0;
         }
-
-        return;
     }
 
     template <typename T, typename Allocator>
@@ -660,7 +583,8 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::erase(const_iterator it) noexcept {
         // reorder the internal vector so that it's erase method may be used
-        std::rotate(mBuffer.begin(), mBuffer.begin() + mNewestElementInsertionIndex, mBuffer.end());
+        auto mBugBegin = mBuffer.begin();
+        std::rotate(mBugBegin, mBugBegin + mNewestElementInsertionIndex, mBuffer.end());
         auto dist = it - cbegin();
         mBuffer.erase(mBuffer.begin() + dist);
         mNewestElementInsertionIndex = mBuffer.size();
@@ -671,62 +595,68 @@ namespace simpleContainers {
     inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::erase(const_iterator first, const_iterator last) noexcept {
         RING_BUFFER_ASSERT((last - first) >= 0, "Iterator to last element cannot be before iterator to first element");
         // reorder the internal vector so that it's erase method may be used
-        std::rotate(mBuffer.begin(), mBuffer.begin() + mNewestElementInsertionIndex, mBuffer.end());
+        auto mBufBegin = mBuffer.begin();
+        std::rotate(mBufBegin, mBufBegin + mNewestElementInsertionIndex, mBuffer.end());
         auto distFirst = first - cbegin();
         auto distLast = last - cbegin();
-        mBuffer.erase(mBuffer.begin() + distFirst, mBuffer.begin() + distLast);
+        mBufBegin = mBuffer.begin();
+        mBuffer.erase(mBufBegin + distFirst, mBufBegin + distLast);
         mNewestElementInsertionIndex = mBuffer.size();
         return iterator{static_cast<typename iterator::size_type>(distFirst), this};
     }
 
     template <typename T, typename Allocator>
-    inline typename RingBuffer<T, Allocator>::reference RingBuffer<T, Allocator>::operator[](size_type pos) noexcept {
+    inline typename RingBuffer<T, Allocator>::reference RingBuffer<T, Allocator>::operator[](const size_type& pos) noexcept {
+        auto index = pos;
         if (mBuffer.size() == mCurrentCapacity) { // most common case
-            pos += mNewestElementInsertionIndex;
-            if (pos >= mCurrentCapacity) {
-                pos -= mCurrentCapacity;
+            index += mNewestElementInsertionIndex;
+            if (index >= mCurrentCapacity) {
+                index -= mCurrentCapacity;
             }
         }
 
-        RING_BUFFER_ASSERT(0 <= pos && pos < mBuffer.size(), "RingBuffer subscript operator out of range");
-        return mBuffer[pos];
+        RING_BUFFER_ASSERT(0 <= index && index < mBuffer.size(), "RingBuffer subscript operator out of range");
+        return mBuffer[index];
     }
 
     template <typename T, typename Allocator>
-    inline typename RingBuffer<T, Allocator>::const_reference RingBuffer<T, Allocator>::operator[](size_type pos) const noexcept {
+    inline typename RingBuffer<T, Allocator>::const_reference RingBuffer<T, Allocator>::operator[](const size_type& pos) const noexcept {
+        auto index = pos;
         if (mBuffer.size() == mCurrentCapacity) { // most common case
-            pos += mNewestElementInsertionIndex;
-            if (pos >= mCurrentCapacity) {
-                pos -= mCurrentCapacity;
+            index += mNewestElementInsertionIndex;
+            if (index >= mCurrentCapacity) {
+                index -= mCurrentCapacity;
             }
         }
 
-        RING_BUFFER_ASSERT(0 <= pos && pos < mBuffer.size(), "RingBuffer subscript operator out of range");
-        return mBuffer[pos];
+        RING_BUFFER_ASSERT(0 <= index && index < mBuffer.size(), "RingBuffer subscript operator out of range");
+        return mBuffer[index];
     }
 
     template <typename T, typename Allocator>
-    inline typename RingBuffer<T, Allocator>::reference RingBuffer<T, Allocator>::at(size_type pos) {
+    inline typename RingBuffer<T, Allocator>::reference RingBuffer<T, Allocator>::at(const size_type& pos) {
+        auto index = pos;
         if (mBuffer.size() == mCurrentCapacity) { // most common case
-            pos += mNewestElementInsertionIndex;
-            if (pos >= mCurrentCapacity) {
-                pos -= mCurrentCapacity;
+            index += mNewestElementInsertionIndex;
+            if (index >= mCurrentCapacity) {
+                index -= mCurrentCapacity;
             }
         }
 
-        return mBuffer.at(pos);
+        return mBuffer.at(index);
     }
 
     template <typename T, typename Allocator>
-    inline typename RingBuffer<T, Allocator>::const_reference RingBuffer<T, Allocator>::at(size_type pos) const {
+    inline typename RingBuffer<T, Allocator>::const_reference RingBuffer<T, Allocator>::at(const size_type& pos) const {
+        auto index = pos;
         if (mBuffer.size() == mCurrentCapacity) { // most common case
-            pos += mNewestElementInsertionIndex;
-            if (pos >= mCurrentCapacity) {
-                pos -= mCurrentCapacity;
+            index += mNewestElementInsertionIndex;
+            if (index >= mCurrentCapacity) {
+                index -= mCurrentCapacity;
             }
         }
 
-        return mBuffer.at(pos);
+        return mBuffer.at(index);
     }
 
     template <typename T, typename Allocator>

@@ -68,16 +68,16 @@ int main() {
     assert(rbFromRbIterators2.size() == rbFromRbIterators1.size() && rbFromRbIterators2.capacity() == rbFromRbIterators1.capacity());
 
     simpleContainers::RingBuffer<SomeClass> rb4 = std::move(tmpRb1); // move ctor
-    assert(rb4.capacity() == tmpRb1InitialCapacity && tmpRb1.capacity() == 0);
-    assert(rb4.size() == 0 && tmpRb1.size() == 0);
+    assert(rb4.capacity() == tmpRb1InitialCapacity);
+    assert(rb4.size() == 0);
 
     simpleContainers::RingBuffer<SomeClass> rb5 = simpleContainers::RingBuffer<SomeClass>{}; // default ctor for temporary, move ctor for rb5, dtor for temporary
     assert(rb5.capacity() == simpleContainers::RingBuffer<SomeClass>::defaultInitialCapacity);
     assert(rb5.size() == 0);
 
     rb5 = std::move(rb4); // move assignment
-    assert(rb5.capacity() == tmpRb1InitialCapacity && rb4.capacity() == 0);
-    assert(rb5.size() == 0 && rb4.size() == 0);
+    assert(rb5.capacity() == tmpRb1InitialCapacity);
+    assert(rb5.size() == 0);
 
     std::cout << "================= TESTING RING BUFFER MEMBER FUNCTIONS =================" << std::endl;
 
