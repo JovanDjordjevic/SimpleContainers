@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
 project(SimpleContainers VERSION 1.0.0 LANGUAGES CXX)
 
@@ -17,31 +17,33 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)   # NOTE: does nothing if generator is set to Visual Studio
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE ON)
 
 # optional targets
-option(ENABLE_DOXYGEN "Create doxygen documentation target" OFF)
-option(ENABLE_TESTING "Build the test executables" OFF)
-option(ENABLE_COVERAGE_REPORT "Create code coverage report for tests" OFF)
-option(ENABLE_BUILD_EXAMPLES "Build examples" OFF)
+option(SC_ENABLE_DOXYGEN "Create doxygen documentation target" OFF)
+option(SC_ENABLE_BUILD_TESTS "Build the test executables" OFF)
+option(SC_ENABLE_BUILD_EXAMPLES "Build examples" OFF)
+option(SC_ENABLE_CALLGRIND_TARGETS "Create additional targets for callgrind/kcachegrind for executables" OFF) #
+option(SC_ENABLE_STATIC_ANALYSIS "Create additional targets for explicit static analysis of targets" OFF) #
 
-if(ENABLE_COVERAGE_REPORT AND NOT ENABLE_TESTING)
+# other build options
+option(SC_ENABLE_COVERAGE_REPORT "Create code coverage report for tests" OFF)
+option(SC_ENABLE_BRUTAL_COMPILE_OPTIONS "Add additional warning flags when building" OFF) #
+option(SC_ENABLE_SANITIZERS "Enable sanitizers during compilation" OFF) #
+
+if(SC_ENABLE_COVERAGE_REPORT AND NOT SC_ENABLE_BUILD_TESTS)
     message(FATAL_ERROR "Code coverage only available when building tests")
 endif()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    if(ENABLE_COVERAGE_REPORT)
-        message(FATAL_ERROR "\nCoverage report generation only supported on GNU and Clang compilers")
-    endif()
-endif()
-
-if(ENABLE_DOXYGEN)
+if(SC_ENABLE_DOXYGEN)
     # To generate html documentation, build the 'docs' target
-    include(docs)
+    include(doxy)
+    cmake_path(APPEND SC_DOXYFILE_PATH ${CMAKE_SOURCE_DIR} docs)
+    scm_create_docs_target(${SC_DOXYFILE_PATH})
 endif()
 
-if(ENABLE_COVERAGE_REPORT)
+if(SC_ENABLE_COVERAGE_REPORT)
     # To generate html coverage report, build the 'ccov-all' target
     message(STATUS "Adding code coverage")
     set(CODE_COVERAGE ON)
@@ -51,14 +53,14 @@ endif()
 
 add_subdirectory(include)
 
-if(ENABLE_TESTING)
+if(SC_ENABLE_BUILD_TESTS)
     # run tests with ctest
     message(STATUS "Building tests")
     include(CTest)
     add_subdirectory(tests)
 endif()
 
-if(ENABLE_BUILD_EXAMPLES)
+if(SC_ENABLE_BUILD_EXAMPLES)
     # you can find example executables in build/examples/... (depending on the cmake generator)
     message(STATUS "Building examples")
     add_subdirectory(examples)

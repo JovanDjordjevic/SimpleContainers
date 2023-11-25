@@ -3,6 +3,7 @@ build
 TODO.txt
 
 docs/html
+sandbox/
 
 # Prerequisites
 *.d

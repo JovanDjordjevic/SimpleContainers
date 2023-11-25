@@ -1,11 +1,11 @@
-if(ENABLE_BUILD_EXAMPLES)
-    set(TEST_SOURCES "simpleRingBufferExample.cpp")
+if(SC_ENABLE_BUILD_EXAMPLES)
+    set(SC_TEST_SOURCES "simpleRingBufferExample.cpp")
 
-    foreach(SOURCE IN LISTS TEST_SOURCES)
-        get_filename_component(EXAMPLE_NAME ${SOURCE} NAME_WLE)
-        message(STATUS "Creating example: " ${EXAMPLE_NAME} " from source: " ${SOURCE})
+    foreach(SC_SOURCE IN LISTS SC_TEST_SOURCES)
+        get_filename_component(SC_EXAMPLE_NAME ${SC_SOURCE} NAME_WLE)
+        message(STATUS "Creating example: ${SC_EXAMPLE_NAME} from source: ${SC_SOURCE}")
         
-        add_executable(${EXAMPLE_NAME} ${SOURCE})
-        target_link_libraries(${EXAMPLE_NAME} PUBLIC simpleContainers)
+        add_executable(${SC_EXAMPLE_NAME} ${SC_SOURCE})
+        target_link_libraries(${SC_EXAMPLE_NAME} PUBLIC simpleContainers)
     endforeach()
 endif()

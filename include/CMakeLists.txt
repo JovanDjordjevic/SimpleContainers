@@ -1,5 +1,5 @@
-set(SIMPLE_CONTAINERS_HEADERS "simpleRingBuffer.hpp")
-set(SIMPLE_CONTAINERS_INCLUDES  "./")
+set(SC_SIMPLE_CONTAINERS_HEADERS "simpleRingBuffer.hpp")
+set(SC_SIMPLE_CONTAINERS_INCLUDES  "./")
 
 add_library(simpleContainers INTERFACE)
-target_include_directories(simpleContainers INTERFACE ${SIMPLE_CONTAINERS_INCLUDES})
+target_include_directories(simpleContainers INTERFACE ${SC_SIMPLE_CONTAINERS_INCLUDES})
