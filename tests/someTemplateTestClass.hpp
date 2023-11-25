@@ -1,11 +1,11 @@
-#ifndef __SOME_TEMPLATE_TEST_CLASS__
-#define __SOME_TEMPLATE_TEST_CLASS__
+#ifndef SOME_TEMPLATE_TEST_CLASS_HPP
+#define SOME_TEMPLATE_TEST_CLASS_HPP
 
 #define SOME_TEMPLATE_CLASS_DEBUG
 
 #ifdef SOME_TEMPLATE_CLASS_DEBUG
     #include <iostream>
-    #define LOG(msg) do { std::cout << msg << std::endl; } while(0);
+    #define LOG(msg) do { std::cout << msg << std::endl; } while(0)
 #else
     #define LOG(msg) do {} while(0);
 #endif // SOME_TEMPLATE_CLASS_DEBUG
@@ -62,4 +62,4 @@ class SomeTemplateClass {
         T mSomeValue;
 };
 
-#endif // __SOME_TEMPLATE_TEST_CLASS__
+#endif // SOME_TEMPLATE_TEST_CLASS_HPP

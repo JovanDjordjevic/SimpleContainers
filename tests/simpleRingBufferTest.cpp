@@ -413,8 +413,8 @@ int main() {
 
     std::cout << "------------------------------------------------------" << std::endl;
 
-    int elemCnt = 0;
-    for(auto& elem : rb11) { ++elemCnt; }
+    size_t elemCnt = 0;
+    std::for_each(rb11.begin(), rb11.end(), [&elemCnt](const int){ ++elemCnt; });
     assert(elemCnt == rb11.size());
 
     std::cout << "------------------------------------------------------" << std::endl;
@@ -422,10 +422,7 @@ int main() {
     for (int i = 0; i < 5; ++i) { rb11.emplace_back(i); }
 
     elemCnt = 0;
-    for(auto& elem : rb11) {
-        ++elemCnt;
-        // std::cout << elem << std::endl;
-    }
+    std::for_each(rb11.begin(), rb11.end(), [&elemCnt](const int){ ++elemCnt; });
     assert(elemCnt == 5 && rb11.size() == 5);
     assert(*(rb11.begin()) == 0);
 
@@ -436,10 +433,8 @@ int main() {
     }
 
     elemCnt = 0;
-    for(auto& elem : rb11) { 
-        ++elemCnt;
-        // std::cout << elem << std::endl;
-    }
+    std::for_each(rb11.begin(), rb11.end(), [&elemCnt](const int){ ++elemCnt; });
+
     assert(elemCnt == 10);
     assert(rb11.full());
     assert(*(rb11.begin()) == 0);
@@ -451,9 +446,8 @@ int main() {
     }
 
     elemCnt = 0;
-    for(auto& elem : rb11) { 
-        ++elemCnt;
-    }
+    std::for_each(rb11.begin(), rb11.end(), [&elemCnt](const int){ ++elemCnt; });
+
     assert(elemCnt == 10);
     assert(*(rb11.begin()) == 5);
     std::vector<int> expectedResult = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};  // true order at this time in the container is {10, 11, 12, 13, 14, 5, 6, 7, 8, 9};
@@ -507,9 +501,7 @@ int main() {
 
     const simpleContainers::RingBuffer<int> rb11Const = rb11;
     elemCnt = 0;
-    for (auto& elem : rb11Const) {
-        ++ elemCnt;
-    }
+    std::for_each(rb11.begin(), rb11.end(), [&elemCnt](const int){ ++elemCnt; });
     assert(elemCnt == 10);
 
     std::cout << "------------------------------------------------------" << std::endl;
@@ -529,6 +521,7 @@ int main() {
 
     // create const from non const iterator
     simpleContainers::RingBuffer<int>::const_iterator rb11ConstItFromNonConstIt = rb11.begin();
+    assert(*rb11ConstItFromNonConstIt == *rb11.begin());
 
     auto tmpIt = rb11.cbegin();
     tmpIt = rb11.begin();
@@ -612,8 +605,8 @@ int main() {
 
     rb13rait1 = rb13.begin();
     auto rb13rait2 = rb13.end();
-    assert((rb13rait2 - rb13rait1) == rb13.size() && rb13rait2 == rb13rait1 + (rb13rait2 - rb13rait1));
-    assert((rb13rait1 - rb13rait2) == (-1) * rb13.size() && rb13rait1 == rb13rait2 + (rb13rait1 - rb13rait2));
+    assert(static_cast<size_t>(rb13rait2 - rb13rait1) == rb13.size() && rb13rait2 == rb13rait1 + (rb13rait2 - rb13rait1));
+    assert((rb13rait1 - rb13rait2) == (-1) * static_cast<int>(rb13.size()) && rb13rait1 == rb13rait2 + (rb13rait1 - rb13rait2));
     rb13rait1 += 1;
     auto rb13rait3 = rb13rait1 + 1;
     rb13rait2 -= 1;
@@ -689,10 +682,10 @@ int main() {
 
     auto rb14Cpy = rb14;
     std::fill(std::begin(rb14Cpy), std::end(rb14Cpy), 5);
-    assert(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 5) == rb14Cpy.size());
+    assert(static_cast<size_t>(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 5)) == rb14Cpy.size());
 
     std::transform(std::begin(rb14Cpy), std::end(rb14Cpy), std::begin(rb14Cpy), [](long x) { return x * 2; });
-    assert(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 10) == rb14Cpy.size());
+    assert(static_cast<size_t>(std::count(rb14Cpy.cbegin(), rb14Cpy.cend(), 10)) == rb14Cpy.size());
 
     rb14Cpy = rb14;
     std::replace_if(std::begin(rb14Cpy), std::end(rb14Cpy), [](long x) { return x > 1000; }, 1000);
@@ -727,6 +720,7 @@ int main() {
 
     rb14Cpy = rb14;
     auto itRb14Partition = std::stable_partition(rb14Cpy.begin(), rb14Cpy.end(), [](long x) {return x % 2 == 0;});
+    assert(*itRb14Partition == -91); // to suppress the itRb14Partition unused warning
     rb14Expected = {552, 3426, 262, -91, -123, 673, 251};
     assert(rb14Cpy.get_elements() == rb14Expected);
 

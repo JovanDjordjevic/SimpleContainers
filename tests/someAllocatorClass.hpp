@@ -1,5 +1,5 @@
-#ifndef __SOME_ALLOCATOR_CLASS__
-#define __SOME_ALLOCATOR_CLASS__
+#ifndef SOME_ALLOCATOR_CLASS_HPP
+#define SOME_ALLOCATOR_CLASS_HPP
 
 #include <string>
 #include <sstream>
@@ -8,7 +8,7 @@
 
 #ifdef SOME_ALLOCATOR_CLASS_DEBUG
     #include <iostream>
-    #define LOG(msg) do { std::cout << msg << std::endl; } while(0);
+    #define LOG(msg) do { std::cout << msg << std::endl; } while(0)
 #else
     #define LOG(msg) do {} while(0);
 #endif // SOME_ALLOCATOR_CLASS_DEBUG
@@ -70,4 +70,4 @@ public:
     }
 };
 
-#endif // #ifndef __SOME_ALLOCATOR_CLASS__
+#endif // #ifndef SOME_ALLOCATOR_CLASS_HPP

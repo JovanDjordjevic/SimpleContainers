@@ -324,7 +324,7 @@ namespace simpleContainers {
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::reference
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator[](const difference_type n) const noexcept {
         SIMPLE_RING_BUFFER_ASSERT(mRingBufPtr != nullptr, "RingBufferIterator::operator[] trying to dereference mRingBufPtr which is a nullptr");
-        return (*mRingBufPtr)[mPosition + n];
+        return (*mRingBufPtr)[mPosition + static_cast<size_type>(n)];
     }
 
     template <typename T, typename Allocator>
@@ -348,7 +348,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator+=(const difference_type n) noexcept {
-        mPosition += n;
+        mPosition += static_cast<size_type>(n);
         return *this;
     }
 
@@ -356,7 +356,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator+(const difference_type n) const noexcept {
-        return RingBufferIterator<constTag>(mPosition + n, mRingBufPtr);
+        return RingBufferIterator<constTag>(mPosition + static_cast<size_type>(n), mRingBufPtr);
     }
 
     template <typename T, typename Allocator>
@@ -380,7 +380,7 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>& 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator-=(const difference_type n) noexcept {
-        mPosition -= n;
+        mPosition -= static_cast<size_type>(n);
         return *this;
     }
 
@@ -388,14 +388,14 @@ namespace simpleContainers {
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag> 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator-(const difference_type n) const noexcept {
-        return RingBufferIterator<constTag>(mPosition - n, mRingBufPtr);
+        return RingBufferIterator<constTag>(mPosition - static_cast<size_type>(n), mRingBufPtr);
     }
               
     template <typename T, typename Allocator>
     template <bool constTag>
     inline typename RingBuffer<T, Allocator>::template RingBufferIterator<constTag>::difference_type 
     RingBuffer<T, Allocator>::RingBufferIterator<constTag>::operator-(const RingBufferIterator& other) const noexcept {
-        return mPosition - other.mPosition;
+        return static_cast<difference_type>(mPosition - other.mPosition);
     }
 
     template <typename T, typename Allocator>
@@ -583,8 +583,8 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline typename RingBuffer<T, Allocator>::iterator RingBuffer<T, Allocator>::erase(const_iterator it) noexcept {
         // reorder the internal vector so that it's erase method may be used
-        auto mBugBegin = mBuffer.begin();
-        std::rotate(mBugBegin, mBugBegin + mNewestElementInsertionIndex, mBuffer.end());
+        auto mBufBegin = mBuffer.begin();
+        std::rotate(mBufBegin, mBufBegin + static_cast<difference_type>(mNewestElementInsertionIndex), mBuffer.end());
         auto dist = it - cbegin();
         mBuffer.erase(mBuffer.begin() + dist);
         mNewestElementInsertionIndex = mBuffer.size();
@@ -596,7 +596,7 @@ namespace simpleContainers {
         SIMPLE_RING_BUFFER_ASSERT((last - first) >= 0, "Iterator to last element cannot be before iterator to first element");
         // reorder the internal vector so that it's erase method may be used
         auto mBufBegin = mBuffer.begin();
-        std::rotate(mBufBegin, mBufBegin + mNewestElementInsertionIndex, mBuffer.end());
+        std::rotate(mBufBegin, mBufBegin + static_cast<difference_type>(mNewestElementInsertionIndex), mBuffer.end());
         auto distFirst = first - cbegin();
         auto distLast = last - cbegin();
         mBufBegin = mBuffer.begin();
