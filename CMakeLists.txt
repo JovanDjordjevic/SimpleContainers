@@ -24,13 +24,13 @@ set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE ON)
 option(SC_ENABLE_DOXYGEN "Create doxygen documentation target" OFF)
 option(SC_ENABLE_BUILD_TESTS "Build the test executables" OFF)
 option(SC_ENABLE_BUILD_EXAMPLES "Build examples" OFF)
-option(SC_ENABLE_CALLGRIND_TARGETS "Create additional targets for callgrind/kcachegrind for executables" OFF) #
-option(SC_ENABLE_STATIC_ANALYSIS "Create additional targets for explicit static analysis of targets" OFF) #
+option(SC_ENABLE_CALLGRIND_TARGETS "Create additional targets for callgrind/kcachegrind for executables" OFF)
+option(SC_ENABLE_STATIC_ANALYSIS "Create additional targets for explicit static analysis of targets" OFF)
 
 # other build options
 option(SC_ENABLE_COVERAGE_REPORT "Create code coverage report for tests" OFF)
-option(SC_ENABLE_BRUTAL_COMPILE_OPTIONS "Add additional warning flags when building" OFF) #
-option(SC_ENABLE_SANITIZERS "Enable sanitizers during compilation" OFF) #
+option(SC_ENABLE_BRUTAL_COMPILE_OPTIONS "Add additional warning flags when building" OFF)
+option(SC_ENABLE_SANITIZERS "Enable sanitizers during compilation" OFF)
 
 if(SC_ENABLE_COVERAGE_REPORT AND NOT SC_ENABLE_BUILD_TESTS)
     message(FATAL_ERROR "Code coverage only available when building tests")
