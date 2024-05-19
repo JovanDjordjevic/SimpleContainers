@@ -18,7 +18,8 @@ int main() {
 }
 
 void test_internal_helpers() {
-    assert(0 == simpleContainers::internal::next_power_of_2<size_t>(-1));
+    // assert(0 == simpleContainers::internal::next_power_of_2<size_t>(-1));    // implicit conversion
+    // assert(_ == simpleContainers::internal::next_power_of_2<int>(-1));       // will fail on assert as expected
     assert(1 == simpleContainers::internal::next_power_of_2<size_t>(0));
     assert(1 == simpleContainers::internal::next_power_of_2<size_t>(1));
     assert(2 == simpleContainers::internal::next_power_of_2<size_t>(2));
@@ -36,5 +37,18 @@ void test_hashed_array_tree_construction() {
     assert(hat1.capacity() == 0);
     assert(hat1.size() == 0);
 
+    hat1.debugPrint();
+
+    hat1.reserve(1);
+    hat1.debugPrint();
+    hat1.reserve(2);
+    hat1.debugPrint();
+    hat1.reserve(3);
+    hat1.debugPrint();
+    hat1.reserve(4);
+    hat1.debugPrint();
+    hat1.reserve(5);
+    hat1.debugPrint();
+    hat1.reserve(65);
     hat1.debugPrint();
 }

@@ -4,6 +4,7 @@
 #ifndef SIMPLE_HASHED_ARRAY_TREE_HPP
 #define SIMPLE_HASHED_ARRAY_TREE_HPP
 
+#include <cmath>
 #include <limits>
 #include <type_traits>
 #include <vector>
@@ -81,13 +82,16 @@ namespace simpleContainers {
 
             ~HashedArrayTree() noexcept = default;
 
+            /// @brief Get number of elements in O(sqrt(n)) time
             size_type size() const noexcept;
             
             /// @brief Return the total capacity of the hashed array tree
-            /// @details This capacity is always a pwoer of 2 such that it is greater
-            ///          or equal to the number of currently stored elements
+            /// @details This capacity is always a power of 2
             size_type capacity() const noexcept;
-        
+
+            /// @brief Reserve enough memory to store at least capacity elements
+            void reserve(const size_type newCapacity) noexcept;
+
         private:
             using LeafVector = std::vector<value_type, allocator_type>;
             using OuterAllocator = typename allocator_type::template rebind<LeafVector>::other;
@@ -96,7 +100,7 @@ namespace simpleContainers {
 
             // an outer vector with this capacity stores at maximum that
             // many inner vectors with the same capacity
-            size_type mCurrentCapacity;
+            size_type mInternalVectorCapacity;
     };
 
     namespace internal {
@@ -112,32 +116,35 @@ namespace simpleContainers {
 namespace simpleContainers {
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::debugPrint() const noexcept {
-        size_type outerVecSize = size();
-        std::cout << "Total size: " << outerVecSize << " Total capacity: " << capacity() << " Size of internal vec: " << mCurrentCapacity << std::endl;
-        for (size_type i = 0; i < mCurrentCapacity; ++i) {
-            if (i < outerVecSize) {
-                const auto& leaf = mInternalData[i];
-                const size_type leafSize = leaf.size();
-                std::cout << "Leaf size/cap: " << leafSize << "/" << leaf.capacity() << " | ";
-                for (size_type j = 0; j < mCurrentCapacity; ++j) {
-                    if (j < leafSize) {
-                        std::cout << leaf[j] << " | ";
-                    }
-                    else {
-                        std::cout << "  |";
-                    }
+        size_type outerVecSize = mInternalData.size();
+        std::cout << std::endl;
+        std::cout << "Total size: " << outerVecSize << " Total capacity: " << capacity() << " Size of internal vec: " << mInternalVectorCapacity << std::endl;
+        for (size_type i = 0; i < mInternalVectorCapacity; ++i) {
+            const auto& leaf = mInternalData[i];
+            
+            if (leaf.empty()) {
+                std::cout << "Leaf size/cap: 0/" << leaf.capacity() << " | ...empty..." << std::endl;
+                continue;
+            }
+
+            const size_type leafSize = leaf.size();
+
+            std::cout << "Leaf size/cap: " << leafSize << "/" << leaf.capacity() << " | ";
+            for (size_type j = 0; j < mInternalVectorCapacity; ++j) {
+                if (j < leafSize) {
+                    std::cout << leaf[j] << " | ";
                 }
-                std::cout << std::endl;
+                else {
+                    std::cout << "  |";
+                }
             }
-            else {
-                std::cout << "Leaf size/cap: 0/0 | ...empty..." << std::endl;
-            }
+            std::cout << std::endl;
         }
     }
 
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
-        : mInternalData{alloc}, mCurrentCapacity{0}
+        : mInternalData{alloc}, mInternalVectorCapacity{0}
     {}
 
     template <typename T, typename Allocator>
@@ -152,8 +159,60 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
-        return mCurrentCapacity * mCurrentCapacity;
+        return mInternalVectorCapacity * mInternalVectorCapacity;
     }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::reserve(const size_type newCapacity) noexcept {
+        if (newCapacity <= capacity()) {
+            return;
+        }
+
+        const size_type ceilOfRoot = static_cast<size_type>(std::ceil(std::sqrt(newCapacity)));
+        const size_type newInternalVectorCapacity = internal::next_power_of_2<size_type>(ceilOfRoot);
+
+        mInternalData.reserve(newInternalVectorCapacity);
+
+        for (size_type i = mInternalVectorCapacity; i < newInternalVectorCapacity; ++i) {
+            mInternalData.emplace_back(std::vector<value_type, allocator_type>{});
+        }
+
+        for (size_type i = 0; i < mInternalVectorCapacity; ++i) {
+            auto& currentRow = mInternalData[i];
+
+            // TODO: find a way to rewrite this alg to avoid this check on every loop iteration
+            if (i == 0) {
+                if (currentRow.empty()) {
+                    break;
+                }
+
+                currentRow.reserve(newInternalVectorCapacity);
+            }
+            else {
+                auto& v1 = mInternalData[i * 2];
+
+                if (v1.empty()) {
+                    break;
+                }
+                
+                currentRow.reserve(newInternalVectorCapacity);
+                currentRow.insert(currentRow.end(), std::make_move_iterator(v1.begin()), std::make_move_iterator(v1.end()));
+                v1.clear();
+            }
+
+            auto& v2 = mInternalData[i * 2 + 1];
+
+            if (v2.empty()) {
+                continue;
+            }
+
+            currentRow.insert(currentRow.end(), std::make_move_iterator(v2.begin()), std::make_move_iterator(v2.end()));
+            v2.clear();
+        }
+
+        mInternalVectorCapacity = newInternalVectorCapacity;
+    }
+
     namespace internal {
         template <typename T>
         inline T next_power_of_2(T capacity) noexcept {
