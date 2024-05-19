@@ -34,4 +34,5 @@ void test_internal_helpers() {
 void test_hashed_array_tree_construction() {
     simpleContainers::HashedArrayTree<int> hat1;
     assert(hat1.capacity() == 0);
+    assert(hat1.size() == 0);
 }

@@ -78,6 +78,8 @@ namespace simpleContainers {
             HashedArrayTree& operator=(HashedArrayTree&& rhs) noexcept = default;
 
             ~HashedArrayTree() noexcept = default;
+
+            size_type size() const noexcept;
             
             /// @brief Return the total capacity of the hashed array tree
             /// @details This capacity is always a pwoer of 2 such that it is greater
@@ -110,6 +112,16 @@ namespace simpleContainers {
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
         : mInternalData{alloc}, mCurrentCapacity{0}
     {}
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::size() const noexcept {
+        size_type size = 0;
+        for (const auto& leafVector : mInternalData) {
+            size += leafVector.size();
+        }
+
+        return size;
+    }
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
