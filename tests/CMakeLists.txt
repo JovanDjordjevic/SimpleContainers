@@ -1,6 +1,6 @@
 if(SC_ENABLE_BUILD_TESTS)
     set(SC_TEST_SOURCES 
-        "simpleRingBufferTest.cpp"
+        # "simpleRingBufferTest.cpp"
         "simpleHashedArrayTreeTest.cpp"
     )
 

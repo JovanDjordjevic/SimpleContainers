@@ -1,6 +1,6 @@
 if(SC_ENABLE_BUILD_EXAMPLES)
     set(SC_TEST_SOURCES 
-        "simpleRingBufferExample.cpp"
+        # "simpleRingBufferExample.cpp"
         "simpleHashedArrayTreeExample.cpp"
     )
 

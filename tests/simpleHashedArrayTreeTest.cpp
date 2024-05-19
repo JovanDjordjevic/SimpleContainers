@@ -6,7 +6,13 @@
 #include "someTemplateTestClass.hpp"
 #include "someAllocatorClass.hpp"
 
+void test_hashed_array_tree_construction();
+
 int main() {
-    std::cout << "hello from simpleHashArrayTreeTest" << std::endl;
+    test_hashed_array_tree_construction();
     return 0;
+}
+
+void test_hashed_array_tree_construction() {
+    simpleContainers::HashedArrayTree<int> hat1;
 }
