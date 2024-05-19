@@ -1,4 +1,7 @@
-set(SC_SIMPLE_CONTAINERS_HEADERS "simpleRingBuffer.hpp")
+set(SC_SIMPLE_CONTAINERS_HEADERS 
+    "simpleRingBuffer.hpp"
+    "simpleHashedArrayTree.hpp"
+)
 set(SC_SIMPLE_CONTAINERS_INCLUDES  "./")
 
 add_library(simpleContainers INTERFACE)

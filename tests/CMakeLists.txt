@@ -1,5 +1,8 @@
 if(SC_ENABLE_BUILD_TESTS)
-    set(SC_TEST_SOURCES "simpleRingBufferTest.cpp")
+    set(SC_TEST_SOURCES 
+        "simpleRingBufferTest.cpp"
+        "simpleHashedArrayTreeTest.cpp"
+    )
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         if(SC_ENABLE_BRUTAL_COMPILE_OPTIONS)
