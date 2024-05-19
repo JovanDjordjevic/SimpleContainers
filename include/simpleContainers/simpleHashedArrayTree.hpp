@@ -4,7 +4,43 @@
 #ifndef SIMPLE_HASHED_ARRAY_TREE_HPP
 #define SIMPLE_HASHED_ARRAY_TREE_HPP
 
+#include <limits>
+#include <type_traits>
 #include <vector>
+
+#ifndef SIMPLE_HASHED_ARRAY_TREE_DEBUG
+    /// @brief Macro for debug checks
+    /// @details This definition controls if some debug checks are made at compile and runtime. If the standard NDEBUG
+    ///          is defined or user defines SIMPLE_HASHED_ARRAY_TREE_NO_DEBUG during during compilation, no debug checks will be made.
+    ///          It is recomended to leave debug checks active during development, and turn them off for release builds
+    #define SIMPLE_HASHED_ARRAY_TREE_DEBUG
+#endif // #ifndef SIMPLE_HASHED_ARRAY_TREE_DEBUG
+
+#if defined NDEBUG || defined SIMPLE_HASHED_ARRAY_TREE_NO_DEBUG
+    #undef SIMPLE_HASHED_ARRAY_TREE_DEBUG
+#endif // #if defined NDEBUG || defined SIMPLE_HASHED_ARRAY_TREE_NO_DEBUG
+
+#ifdef SIMPLE_HASHED_ARRAY_TREE_DEBUG
+    #include <iostream>
+
+    /// @brief Default stream where debug messages will be printed when they are enabled
+    #define SIMPLE_HASHED_ARRAY_TREE_DEBUG_OUTPUT_STREAM std::cerr
+
+    #define SIMPLE_HASHED_ARRAY_TREE_ASSERT(cond, msg) \
+        do { \
+            if (!(cond)) { \
+                SIMPLE_HASHED_ARRAY_TREE_DEBUG_OUTPUT_STREAM << "\nHASHED ARRAY TREE ASSERT FAILED WITH MESSAGE: " << msg \
+                    << "\nEXPECTED: " << #cond \
+                    << "\nFILE: " << __FILE__ << ", LINE " << __LINE__ << std::endl << std::endl; \
+                std::abort(); \
+            } \
+        } while(0)
+
+    #define SIMPLE_HASHED_ARRAY_TREE_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
+#else
+    #define SIMPLE_HASHED_ARRAY_TREE_ASSERT(cond, msg) do {} while (false)
+    #define SIMPLE_HASHED_ARRAY_TREE_STATIC_ASSERT(cond, msg) ;
+#endif // #ifdef SIMPLE_HASHED_ARRAY_TREE_DEBUG
 
 // ============================================================================================================================================
 // =================================================================== API ====================================================================
@@ -58,6 +94,11 @@ namespace simpleContainers {
             // many inner vectors with the same capacity
             size_type mCurrentCapacity;
     };
+
+    namespace internal {
+        template <typename T>
+        inline T next_power_of_2(T capacity) noexcept;
+    } // namespace internal
 } // namespace simpleContainers
 
 // ============================================================================================================================================
@@ -74,6 +115,26 @@ namespace simpleContainers {
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
         return mCurrentCapacity * mCurrentCapacity;
     }
+    namespace internal {
+        template <typename T>
+        inline T next_power_of_2(T capacity) noexcept {
+            SIMPLE_HASHED_ARRAY_TREE_STATIC_ASSERT(std::is_integral<T>::value, "Capacity must of integral type");
+            SIMPLE_HASHED_ARRAY_TREE_ASSERT(capacity >= 0, "Capacity must be >= 0");
+
+            if (capacity == 0) {
+                return 1;
+            }
+
+            --capacity;
+
+            constexpr auto num_digits_for_type = std::numeric_limits<T>::digits;
+
+            for (size_t shift = 1; shift < num_digits_for_type; shift *= 2) {
+                capacity |= capacity >> shift;
+            }
+            return capacity + 1;
+        }
+    } // namespace internal
 } // namespace simpleContainers
 
 #endif // SIMPLE_HASHED_ARRAY_TREE_HPP
