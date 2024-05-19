@@ -91,6 +91,8 @@ namespace simpleContainers {
 
             /// @brief Reserve enough memory to store at least capacity elements
             void reserve(const size_type newCapacity) noexcept;
+            
+            void clear() noexcept;
 
         private:
             using LeafVector = std::vector<value_type, allocator_type>;
@@ -211,6 +213,13 @@ namespace simpleContainers {
         }
 
         mInternalVectorCapacity = newInternalVectorCapacity;
+    }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::clear() noexcept {
+        for (auto& leafVector : mInternalData) {
+            leafVector.clear();
+        }
     }
 
     namespace internal {

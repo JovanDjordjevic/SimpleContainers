@@ -51,4 +51,7 @@ void test_hashed_array_tree_construction() {
     hat1.debugPrint();
     hat1.reserve(65);
     hat1.debugPrint();
+
+    hat1.clear();
+    assert(hat1.size() == 0);
 }
