@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 
 #include "simpleContainers/simpleHashedArrayTree.hpp"
@@ -15,4 +16,5 @@ int main() {
 
 void test_hashed_array_tree_construction() {
     simpleContainers::HashedArrayTree<int> hat1;
+    assert(hat1.capacity() == 0);
 }

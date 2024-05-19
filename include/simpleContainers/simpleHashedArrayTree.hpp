@@ -14,7 +14,7 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     class HashedArrayTree;
 
-    /// @brief Class representing a hashed array tree structure
+    /// @brief Class representing a hashed array tree structure (HAT)
     /// @details This is the main class the user should interact with. HashedArrayTree is a way to implement
     ///          dynamic arrays that reduces the amount of copying when resizing the structure
     ///          see https://en.wikipedia.org/wiki/Hashed_array_tree
@@ -42,6 +42,11 @@ namespace simpleContainers {
             HashedArrayTree& operator=(HashedArrayTree&& rhs) noexcept = default;
 
             ~HashedArrayTree() noexcept = default;
+            
+            /// @brief Return the total capacity of the hashed array tree
+            /// @details This capacity is always a pwoer of 2 such that it is greater
+            ///          or equal to the number of currently stored elements
+            size_type capacity() const noexcept;
         
         private:
             using LeafVector = std::vector<value_type, allocator_type>;
@@ -64,6 +69,11 @@ namespace simpleContainers {
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
         : mInternalData{alloc}, mCurrentCapacity{0}
     {}
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
+        return mCurrentCapacity * mCurrentCapacity;
+    }
 } // namespace simpleContainers
 
 #endif // SIMPLE_HASHED_ARRAY_TREE_HPP
