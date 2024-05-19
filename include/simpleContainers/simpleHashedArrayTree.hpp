@@ -69,6 +69,8 @@ namespace simpleContainers {
             using size_type = typename std::allocator_traits<allocator_type>::size_type;
             using difference_type = typename std::allocator_traits<allocator_type>::difference_type;
 
+            void debugPrint() const noexcept;
+
             HashedArrayTree(const allocator_type& alloc = allocator_type{});
 
             HashedArrayTree(const HashedArrayTree& other) = default;
@@ -108,6 +110,31 @@ namespace simpleContainers {
 // ============================================================================================================================================
 
 namespace simpleContainers {
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::debugPrint() const noexcept {
+        size_type outerVecSize = size();
+        std::cout << "Total size: " << outerVecSize << " Total capacity: " << capacity() << " Size of internal vec: " << mCurrentCapacity << std::endl;
+        for (size_type i = 0; i < mCurrentCapacity; ++i) {
+            if (i < outerVecSize) {
+                const auto& leaf = mInternalData[i];
+                const size_type leafSize = leaf.size();
+                std::cout << "Leaf size/cap: " << leafSize << "/" << leaf.capacity() << " | ";
+                for (size_type j = 0; j < mCurrentCapacity; ++j) {
+                    if (j < leafSize) {
+                        std::cout << leaf[j] << " | ";
+                    }
+                    else {
+                        std::cout << "  |";
+                    }
+                }
+                std::cout << std::endl;
+            }
+            else {
+                std::cout << "Leaf size/cap: 0/0 | ...empty..." << std::endl;
+            }
+        }
+    }
+
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
         : mInternalData{alloc}, mCurrentCapacity{0}
