@@ -257,7 +257,7 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::push_back(const value_type& elem) {
         if (full()) {
-            reserve(capacity() + 1);
+            reserve(mSize + 1);
         }
 
         for (auto& leafVector : mInternalData) {
@@ -282,7 +282,7 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::push_back(value_type&& elem) {
         if (full()) {
-            reserve(capacity() + 1);
+            reserve(mSize + 1);
         }
 
         for (auto& leafVector : mInternalData) {
@@ -308,7 +308,7 @@ namespace simpleContainers {
     template <typename ...Args>
     inline void HashedArrayTree<T, Allocator>::emplace_back(Args&&... args) {
         if (full()) {
-            reserve(capacity() + 1);
+            reserve(mSize + 1);
         }
 
         for (auto& leafVector : mInternalData) {
