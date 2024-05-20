@@ -84,15 +84,22 @@ namespace simpleContainers {
 
             /// @brief Get number of elements in O(sqrt(n)) time
             size_type size() const noexcept;
-            
             /// @brief Return the total capacity of the hashed array tree
             /// @details This capacity is always a power of 2
             size_type capacity() const noexcept;
+
+            bool full() const noexcept;
+            bool empty() const noexcept;
 
             /// @brief Reserve enough memory to store at least capacity elements
             void reserve(const size_type newCapacity) noexcept;
             
             void clear() noexcept;
+
+            void push_back(const value_type& elem);
+            void push_back(value_type&& elem);
+            template <typename ...Args>
+            void emplace_back(Args&&... args);
 
         private:
             using LeafVector = std::vector<value_type, allocator_type>;
@@ -103,11 +110,21 @@ namespace simpleContainers {
             // an outer vector with this capacity stores at maximum that
             // many inner vectors with the same capacity
             size_type mInternalVectorCapacity;
+
+            // total number of elements currently stored in the HAT
+            size_type mSize;
+
+            // current power of 2 such that 2 ^ mCurrentPow = mInternalVectorCapacity
+            // stored here to avoid recalculating on every element access
+            size_type mCurrentPow;
     };
 
     namespace internal {
         template <typename T>
         inline T next_power_of_2(T capacity) noexcept;
+
+        template <typename T>
+        inline T what_power_of_2(T capacity) noexcept;
     } // namespace internal
 } // namespace simpleContainers
 
@@ -118,9 +135,8 @@ namespace simpleContainers {
 namespace simpleContainers {
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::debugPrint() const noexcept {
-        size_type outerVecSize = mInternalData.size();
         std::cout << std::endl;
-        std::cout << "Total size: " << outerVecSize << " Total capacity: " << capacity() << " Size of internal vec: " << mInternalVectorCapacity << std::endl;
+        std::cout << "Total size: " << mSize << " Total capacity: " << capacity() << " Size of internal vec: " << mInternalVectorCapacity << std::endl;
         for (size_type i = 0; i < mInternalVectorCapacity; ++i) {
             const auto& leaf = mInternalData[i];
             
@@ -146,22 +162,29 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
-        : mInternalData{alloc}, mInternalVectorCapacity{0}
-    {}
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentPow{0}
+    {
+        // mCurrentPow = 0 in the beginning even though 2 ^ 0 != mInternalVectorCapacity !!
+    }
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::size() const noexcept {
-        size_type size = 0;
-        for (const auto& leafVector : mInternalData) {
-            size += leafVector.size();
-        }
-
-        return size;
+        return mSize;
     }
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
         return mInternalVectorCapacity * mInternalVectorCapacity;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool HashedArrayTree<T, Allocator>::full() const noexcept {
+        return mSize == capacity();
+    }
+
+    template <typename T, typename Allocator>
+    inline bool HashedArrayTree<T, Allocator>::empty() const noexcept {
+        return mSize == 0;
     }
 
     template <typename T, typename Allocator>
@@ -179,7 +202,7 @@ namespace simpleContainers {
             mInternalData.emplace_back(std::vector<value_type, allocator_type>{});
         }
 
-        for (size_type i = 0; i < mInternalVectorCapacity; ++i) {
+        for (size_type i = 0; i < mInternalVectorCapacity / 2; ++i) {
             auto& currentRow = mInternalData[i];
 
             // TODO: find a way to rewrite this alg to avoid this check on every loop iteration
@@ -213,6 +236,7 @@ namespace simpleContainers {
         }
 
         mInternalVectorCapacity = newInternalVectorCapacity;
+        mCurrentPow = internal::what_power_of_2<size_type>(mInternalVectorCapacity);
     }
 
     template <typename T, typename Allocator>
@@ -220,6 +244,82 @@ namespace simpleContainers {
         for (auto& leafVector : mInternalData) {
             leafVector.clear();
         }
+    }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::push_back(const value_type& elem) {
+        if (full()) {
+            reserve(capacity() + 1);
+        }
+
+        for (auto& leafVector : mInternalData) {
+            // if we get to an empty leaf vector it is guaranteed to be the first one that is empty
+            if (leafVector.capacity() < mInternalVectorCapacity) {
+                leafVector.reserve(mInternalVectorCapacity);
+                leafVector.push_back(elem);
+                break;
+            }
+
+            if (leafVector.size() == leafVector.capacity()) {
+                continue;
+            }
+
+            leafVector.push_back(elem);
+            break;
+        }
+        
+        ++mSize;
+    }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::push_back(value_type&& elem) {
+        if (full()) {
+            reserve(capacity() + 1);
+        }
+
+        for (auto& leafVector : mInternalData) {
+            // if we get to an empty leaf vector it is guaranteed to be the first one that is empty
+            if (leafVector.capacity() < mInternalVectorCapacity) {
+                leafVector.reserve(mInternalVectorCapacity);
+                leafVector.push_back(std::forward<value_type>(elem));
+                break;
+            }
+
+            if (leafVector.size() == leafVector.capacity()) {
+                continue;
+            }
+
+            leafVector.push_back(std::forward<value_type>(elem));
+            break;
+        }
+        
+        ++mSize;
+    }
+
+    template <typename T, typename Allocator>
+    template <typename ...Args>
+    inline void HashedArrayTree<T, Allocator>::emplace_back(Args&&... args) {
+        if (full()) {
+            reserve(capacity() + 1);
+        }
+
+        for (auto& leafVector : mInternalData) {
+            // if we get to an empty leaf vector it is guaranteed to be the first one that is empty
+            if (leafVector.capacity() < mInternalVectorCapacity) {
+                leafVector.reserve(mInternalVectorCapacity);
+                leafVector.emplace_back(std::forward<Args>(args)...);
+                break;
+            }
+
+            if (leafVector.size() == leafVector.capacity()) {
+                continue;
+            }
+
+            leafVector.emplace_back(std::forward<Args>(args)...);
+            break;
+        }
+        
+        ++mSize;
     }
 
     namespace internal {
@@ -240,6 +340,13 @@ namespace simpleContainers {
                 capacity |= capacity >> shift;
             }
             return capacity + 1;
+        }
+
+        template <typename T>
+        inline T what_power_of_2(T capacity) noexcept {
+            SIMPLE_HASHED_ARRAY_TREE_STATIC_ASSERT(std::is_integral<T>::value, "Capacity must of integral type");
+            SIMPLE_HASHED_ARRAY_TREE_ASSERT(capacity > 0, "Capacity must be > 0");
+            return static_cast<T>(std::log2(capacity));
         }
     } // namespace internal
 } // namespace simpleContainers
