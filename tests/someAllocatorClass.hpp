@@ -22,6 +22,11 @@ class SomeAllocatorClass {
 public:
     using value_type = T;
 
+    template <typename U>
+    struct rebind {
+        using other = SomeAllocatorClass<U>;
+    };
+
     SomeAllocatorClass() noexcept {
         LOG("SomeAllocatorClass CTOR");
     }
