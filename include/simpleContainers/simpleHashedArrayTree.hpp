@@ -175,11 +175,6 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::max_size() const noexcept {
-        // Even though the internal imeplementation of HAT here is a vector of vectors, giving a max_size of 
-        // mInternalData.max_size() * mInternalData.max_size() is not feasible since it is pretty much impossible
-        // for any structure to be able to allocate that much memory (also that calculation will most certainly cause a 
-        // size_t overflow). Therefore we can safely limit ourselves to the max_size of a single vector (and therefore 
-        // limit the mInternalVectorCapacity to sqrt(mInternalData.max_size()))
         return mInternalData.max_size();
     }
 
@@ -255,6 +250,8 @@ namespace simpleContainers {
         for (auto& leafVector : mInternalData) {
             leafVector.clear();
         }
+
+        mSize = 0;
     }
 
     template <typename T, typename Allocator>

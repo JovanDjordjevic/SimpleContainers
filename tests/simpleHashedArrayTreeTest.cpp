@@ -75,8 +75,8 @@ void test_hashed_array_tree_construction() {
     assert(hat6.size() == tmpHat1Size);
 
     simpleContainers::HashedArrayTree<SomeClass> hat7 = simpleContainers::HashedArrayTree<SomeClass>{}; // default ctor for temporary, move ctor for hat7, dtor for temporary
-    assert(hat2.capacity() == 0);
-    assert(hat2.size() == 0);
+    assert(hat7.capacity() == 0);
+    assert(hat7.size() == 0);
 
     hat7 = std::move(hat6); // move assignment
     assert(hat7.capacity() == tmpHat1Capacity);
@@ -85,26 +85,33 @@ void test_hashed_array_tree_construction() {
 
 void test_hashed_array_tree_member_functions() {
     simpleContainers::HashedArrayTree<int> hat1;
+    std::vector<std::vector<int>> tmpVectorOfVectors;
+
+    assert(hat1.max_size() == tmpVectorOfVectors.max_size());
+
     assert(hat1.capacity() == 0);
     assert(hat1.size() == 0);
+    assert(hat1.empty());
+    assert(hat1.full());   // since at this time size=capacity=0 it is technically full
 
-    hat1.debugPrint();
+    for (int i = 0; i < 4; ++i) { hat1.push_back(i); }
 
-    hat1.reserve(1);
-    hat1.debugPrint();
-    hat1.reserve(2);
-    hat1.debugPrint();
-    hat1.reserve(3);
-    hat1.debugPrint();
-    hat1.reserve(4);
-    hat1.debugPrint();
+    assert(hat1.capacity() == 4);
+    assert(hat1.size() == 4);
+    assert(!hat1.empty());
+    assert(hat1.full());
+
     hat1.reserve(5);
-    hat1.debugPrint();
-    hat1.reserve(65);
-    hat1.debugPrint();
+    assert(hat1.capacity() == 16);
+    assert(hat1.size() == 4);
+    assert(!hat1.empty());
+    assert(!hat1.full());
 
     hat1.clear();
+    assert(hat1.capacity() == 16);
     assert(hat1.size() == 0);
+    assert(hat1.empty());
+    assert(!hat1.full());
 }
 
 void test_hashed_array_tree_insertion() {
@@ -112,10 +119,10 @@ void test_hashed_array_tree_insertion() {
     assert(hat1.capacity() == 0);
     assert(hat1.size() == 0);
 
-    hat1.debugPrint();
+    // hat1.debugPrint();
 
     for (int i = 0; i < 65; ++i) {
         hat1.push_back(i);
-        hat1.debugPrint();
+        // hat1.debugPrint();
     }
 }
