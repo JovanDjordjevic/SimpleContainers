@@ -119,10 +119,11 @@ void test_hashed_array_tree_insertion() {
     assert(hat1.capacity() == 0);
     assert(hat1.size() == 0);
 
-    // hat1.debugPrint();
-
     for (int i = 0; i < 65; ++i) {
         hat1.push_back(i);
-        // hat1.debugPrint();
+        hat1.debugPrint();
+
+        assert(hat1.size() == static_cast<simpleContainers::HashedArrayTree<int>::size_type>(i + 1));
+        assert(hat1[i] == i);
     }
 }

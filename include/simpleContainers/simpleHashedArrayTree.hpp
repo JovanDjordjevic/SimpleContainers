@@ -102,6 +102,9 @@ namespace simpleContainers {
             template <typename ...Args>
             void emplace_back(Args&&... args);
 
+            reference operator[](const size_type pos) noexcept;
+            const_reference operator[](const size_type pos) const noexcept;
+
         private:
             using LeafVector = std::vector<value_type, allocator_type>;
             using OuterAllocator = typename allocator_type::template rebind<LeafVector>::other;
@@ -328,6 +331,18 @@ namespace simpleContainers {
         }
         
         ++mSize;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::reference HashedArrayTree<T, Allocator>::operator[](const size_type pos) noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < size(), "HashedArrayTree subscript operator out of range");
+        return mInternalData[pos >> mCurrentPow][pos & (mInternalVectorCapacity - 1)];
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_reference HashedArrayTree<T, Allocator>::operator[](const size_type pos) const noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < size(), "HashedArrayTree subscript operator out of range");
+        return mInternalData[pos >> mCurrentPow][pos & (mInternalVectorCapacity - 1)];
     }
 
     namespace internal {
