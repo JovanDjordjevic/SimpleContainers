@@ -98,7 +98,7 @@ void test_hashed_array_tree_member_functions() {
     assert(hat1.max_capacity() == 0);
     assert(hat1.size() == 0);
     assert(hat1.empty());
-    assert(hat1.full());   // since at this time size=max_capacity=0 it is technically full
+    assert(!hat1.full());
 
     for (int i = 0; i < 4; ++i) { hat1.push_back(i); }
 

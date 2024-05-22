@@ -93,7 +93,7 @@ namespace simpleContainers {
             size_type capacity() const noexcept;
             /// @brief Return the maximum capacity the HAT can hold before the internal leaf vectors are restructured
             size_type max_capacity() const noexcept;
-
+            /// @brief check if the HAT is full (must have non-zero size)
             bool full() const noexcept;
             bool empty() const noexcept;
 
@@ -203,7 +203,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline bool HashedArrayTree<T, Allocator>::full() const noexcept {
-        return mSize == mInternalVectorCapacity * mInternalVectorCapacity;
+        return mSize > 0 && mSize == mInternalVectorCapacity * mInternalVectorCapacity;
     }
 
     template <typename T, typename Allocator>
@@ -302,7 +302,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::push_back(const value_type& elem) {
-        if (full()) {
+        if (mSize == max_capacity()) {
             reserve(mSize + 1);
         }
 
@@ -322,7 +322,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::push_back(value_type&& elem) {
-        if (full()) {
+        if (mSize == max_capacity()) {
             reserve(mSize + 1);
         }
 
@@ -343,7 +343,7 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     template <typename ...Args>
     inline void HashedArrayTree<T, Allocator>::emplace_back(Args&&... args) {
-        if (full()) {
+        if (mSize == max_capacity()) {
             reserve(mSize + 1);
         }
 
