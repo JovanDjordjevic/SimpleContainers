@@ -128,13 +128,13 @@ namespace simpleContainers {
             size_type mCurrentPow;
     };
 
-    namespace internal {
+    namespace hat_internal {
         template <typename T>
         inline T next_power_of_2(T capacity) noexcept;
 
         template <typename T>
         inline T what_power_of_2(T capacity) noexcept;
-    } // namespace internal
+    } // namespace hat_internal
 } // namespace simpleContainers
 
 // ============================================================================================================================================
@@ -218,7 +218,7 @@ namespace simpleContainers {
         }
 
         if (newCapacity < max_capacity()) {
-            size_t numLeafsToAllocateFor = newCapacity / mInternalVectorCapacity;
+            size_type numLeafsToAllocateFor = newCapacity / mInternalVectorCapacity;
             if ((newCapacity - numLeafsToAllocateFor * mInternalVectorCapacity) > 0) {
                 ++numLeafsToAllocateFor;
             }
@@ -231,7 +231,7 @@ namespace simpleContainers {
         }
 
         const size_type ceilOfRoot = static_cast<size_type>(std::ceil(std::sqrt(newCapacity)));
-        const size_type newInternalVectorCapacity = internal::next_power_of_2<size_type>(ceilOfRoot);
+        const size_type newInternalVectorCapacity = hat_internal::next_power_of_2<size_type>(ceilOfRoot);
 
         mInternalData.reserve(newInternalVectorCapacity);
 
@@ -288,7 +288,7 @@ namespace simpleContainers {
         }
 
         mInternalVectorCapacity = newInternalVectorCapacity;
-        mCurrentPow = internal::what_power_of_2<size_type>(mInternalVectorCapacity);
+        mCurrentPow = hat_internal::what_power_of_2<size_type>(mInternalVectorCapacity);
     }
 
     template <typename T, typename Allocator>
@@ -307,19 +307,14 @@ namespace simpleContainers {
         }
 
         for (auto& leafVector : mInternalData) {
-            // if we get to an empty leaf vector it is guaranteed to be the first one that is empty
             if (leafVector.capacity() < mInternalVectorCapacity) {
                 leafVector.reserve(mInternalVectorCapacity);
+            }
+            
+            if (leafVector.size() < leafVector.capacity()) {
                 leafVector.push_back(elem);
                 break;
             }
-
-            if (leafVector.size() == leafVector.capacity()) {
-                continue;
-            }
-
-            leafVector.push_back(elem);
-            break;
         }
         
         ++mSize;
@@ -332,19 +327,14 @@ namespace simpleContainers {
         }
 
         for (auto& leafVector : mInternalData) {
-            // if we get to an empty leaf vector it is guaranteed to be the first one that is empty
             if (leafVector.capacity() < mInternalVectorCapacity) {
                 leafVector.reserve(mInternalVectorCapacity);
+            }
+            
+            if (leafVector.size() < leafVector.capacity()) {
                 leafVector.push_back(std::forward<value_type>(elem));
                 break;
             }
-
-            if (leafVector.size() == leafVector.capacity()) {
-                continue;
-            }
-
-            leafVector.push_back(std::forward<value_type>(elem));
-            break;
         }
         
         ++mSize;
@@ -358,19 +348,14 @@ namespace simpleContainers {
         }
 
         for (auto& leafVector : mInternalData) {
-            // if we get to an empty leaf vector it is guaranteed to be the first one that is empty
             if (leafVector.capacity() < mInternalVectorCapacity) {
                 leafVector.reserve(mInternalVectorCapacity);
+            }
+            
+            if (leafVector.size() < leafVector.capacity()) {
                 leafVector.emplace_back(std::forward<Args>(args)...);
                 break;
             }
-
-            if (leafVector.size() == leafVector.capacity()) {
-                continue;
-            }
-
-            leafVector.emplace_back(std::forward<Args>(args)...);
-            break;
         }
         
         ++mSize;
@@ -388,7 +373,7 @@ namespace simpleContainers {
         return mInternalData[pos >> mCurrentPow][pos & (mInternalVectorCapacity - 1)];
     }
 
-    namespace internal {
+    namespace hat_internal {
         template <typename T>
         inline T next_power_of_2(T capacity) noexcept {
             SIMPLE_HASHED_ARRAY_TREE_STATIC_ASSERT(std::is_integral<T>::value, "Capacity must of integral type");
@@ -414,7 +399,7 @@ namespace simpleContainers {
             SIMPLE_HASHED_ARRAY_TREE_ASSERT(capacity > 0, "Capacity must be > 0");
             return static_cast<T>(std::log2(capacity));
         }
-    } // namespace internal
+    } // namespace hat_internal
 } // namespace simpleContainers
 
 #endif // SIMPLE_HASHED_ARRAY_TREE_HPP
