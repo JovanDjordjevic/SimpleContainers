@@ -85,9 +85,14 @@ namespace simpleContainers {
             /// @brief Get number of elements in O(sqrt(n)) time
             size_type size() const noexcept;
             size_type max_size() const noexcept;
-            /// @brief Return the total capacity of the hashed array tree
-            /// @details This capacity is always a power of 2
+            /// @brief Return the current capacity of the HAT
+            /// @details Note that this is not the maximum capacity of the HAT
+            ///          Filling out this current capacity does not necessarily
+            ///          cause the internal data to be reorganized. Internal
+            ///          Restructure only happens when the maximum allowed capacity is reached
             size_type capacity() const noexcept;
+            /// @brief Return the maximum capacity the HAT can hold before the internal leaf vectors are restructured
+            size_type max_capacity() const noexcept;
 
             bool full() const noexcept;
             bool empty() const noexcept;
@@ -139,7 +144,7 @@ namespace simpleContainers {
 namespace simpleContainers {
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::debugPrint() const noexcept {
-        std::cout << std::endl;
+        std::cout << std::endl << std::endl << "=========================================" << std::endl;
         std::cout << "Total size: " << mSize << " Total capacity: " << capacity() << " Size of internal vec: " << mInternalVectorCapacity << std::endl;
         for (size_type i = 0; i < mInternalVectorCapacity; ++i) {
             const auto& leaf = mInternalData[i];
@@ -162,6 +167,7 @@ namespace simpleContainers {
             }
             std::cout << std::endl;
         }
+        std::cout << "=========================================" << std::endl << std::endl;
     }
 
     template <typename T, typename Allocator>
@@ -183,12 +189,21 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
+        size_type capacity = 0;
+        for (const auto& leafVector : mInternalData) {
+            capacity += leafVector.capacity();
+        }
+        return capacity;
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::max_capacity() const noexcept {
         return mInternalVectorCapacity * mInternalVectorCapacity;
     }
 
     template <typename T, typename Allocator>
     inline bool HashedArrayTree<T, Allocator>::full() const noexcept {
-        return mSize == capacity();
+        return mSize == mInternalVectorCapacity * mInternalVectorCapacity;
     }
 
     template <typename T, typename Allocator>
@@ -202,6 +217,19 @@ namespace simpleContainers {
             return;
         }
 
+        if (newCapacity < max_capacity()) {
+            size_t numLeafsToAllocateFor = newCapacity / mInternalVectorCapacity;
+            if ((newCapacity - numLeafsToAllocateFor * mInternalVectorCapacity) > 0) {
+                ++numLeafsToAllocateFor;
+            }
+
+            for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
+                mInternalData[i].reserve(mInternalVectorCapacity);
+            }
+
+            return;
+        }
+
         const size_type ceilOfRoot = static_cast<size_type>(std::ceil(std::sqrt(newCapacity)));
         const size_type newInternalVectorCapacity = internal::next_power_of_2<size_type>(ceilOfRoot);
 
@@ -211,6 +239,16 @@ namespace simpleContainers {
             mInternalData.emplace_back(std::vector<value_type, allocator_type>{});
         }
 
+        size_type numLeafsToAllocateFor = newCapacity / newInternalVectorCapacity;
+        if ((newCapacity - numLeafsToAllocateFor * newInternalVectorCapacity) > 0) {
+            ++numLeafsToAllocateFor;
+        }
+
+        for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
+            mInternalData[i].reserve(newInternalVectorCapacity);
+        }
+
+        // reorder
         for (size_type i = 0; i < mInternalVectorCapacity / 2; ++i) {
             auto& currentRow = mInternalData[i];
 
@@ -242,6 +280,11 @@ namespace simpleContainers {
 
             currentRow.insert(currentRow.end(), std::make_move_iterator(v2.begin()), std::make_move_iterator(v2.end()));
             v2.clear();
+        }
+
+        // shrink the ones that are left
+        for (size_type i = numLeafsToAllocateFor; i < mInternalVectorCapacity; ++i) {
+            mInternalData[i] = std::vector<value_type, allocator_type>{};
         }
 
         mInternalVectorCapacity = newInternalVectorCapacity;

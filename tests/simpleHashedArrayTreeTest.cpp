@@ -22,6 +22,8 @@ int main() {
 }
 
 void test_internal_helpers() {
+    std::cout << "================= TESTING INTERNAL HELPERS =================" << std::endl;
+
     // assert(0 == simpleContainers::internal::next_power_of_2<size_t>(-1));    // implicit conversion
     // assert(_ == simpleContainers::internal::next_power_of_2<int>(-1));       // will fail on assert as expected
     assert(1 == simpleContainers::internal::next_power_of_2<size_t>(0));
@@ -43,6 +45,8 @@ void test_internal_helpers() {
 }
 
 void test_hashed_array_tree_construction() {
+    std::cout << "================= TESTING HASHED ARRAY TREE CONSTRUCTION =================" << std::endl;
+
     simpleContainers::HashedArrayTree<int> hat1;
     assert(hat1.capacity() == 0);
     assert(hat1.size() == 0);
@@ -84,46 +88,100 @@ void test_hashed_array_tree_construction() {
 }
 
 void test_hashed_array_tree_member_functions() {
+    std::cout << "================= TESTING HASHED ARRAY TREE MEMBER FUNCTIONS =================" << std::endl;
+
     simpleContainers::HashedArrayTree<int> hat1;
     std::vector<std::vector<int>> tmpVectorOfVectors;
 
     assert(hat1.max_size() == tmpVectorOfVectors.max_size());
-
     assert(hat1.capacity() == 0);
+    assert(hat1.max_capacity() == 0);
     assert(hat1.size() == 0);
     assert(hat1.empty());
-    assert(hat1.full());   // since at this time size=capacity=0 it is technically full
+    assert(hat1.full());   // since at this time size=max_capacity=0 it is technically full
 
     for (int i = 0; i < 4; ++i) { hat1.push_back(i); }
 
     assert(hat1.capacity() == 4);
+    assert(hat1.max_capacity() == 4);
     assert(hat1.size() == 4);
     assert(!hat1.empty());
     assert(hat1.full());
 
     hat1.reserve(5);
-    assert(hat1.capacity() == 16);
+    assert(hat1.capacity() == 8);
+    assert(hat1.max_capacity() == 16);
     assert(hat1.size() == 4);
     assert(!hat1.empty());
     assert(!hat1.full());
 
-    hat1.clear();
-    assert(hat1.capacity() == 16);
+    hat1.reserve(3);        // capacity should remain unchanged
+    assert(hat1.capacity() == 8);
+    assert(hat1.max_capacity() == 16);
+    assert(hat1.size() == 4);
+    assert(!hat1.empty());
+    assert(!hat1.full());
+
+    hat1.reserve(9);        // capacity should change but not max_capacity
+    assert(hat1.capacity() == 12);
+    assert(hat1.max_capacity() == 16);
+    assert(hat1.size() == 4);
+    assert(!hat1.empty());
+    assert(!hat1.full());
+
+    hat1.clear();       // clear should only affect size, not capacity
+    assert(hat1.capacity() == 12);
+    assert(hat1.max_capacity() == 16);
     assert(hat1.size() == 0);
     assert(hat1.empty());
     assert(!hat1.full());
+
+    hat1.reserve(7 * 16 - 8);
+    assert(hat1.capacity() == 112); 
+    assert(hat1.max_capacity() == 256); 
 }
 
 void test_hashed_array_tree_insertion() {
-    simpleContainers::HashedArrayTree<int> hat1;
+    std::cout << "================= TESTING HASHED ARRAY TREE INSERTION =================" << std::endl;
+
+    simpleContainers::HashedArrayTree<unsigned int> hat1;
     assert(hat1.capacity() == 0);
     assert(hat1.size() == 0);
-
-    for (int i = 0; i < 65; ++i) {
+    
+    for (unsigned int i = 0; i < 65; ++i) {
         hat1.push_back(i);
         hat1.debugPrint();
 
-        assert(hat1.size() == static_cast<simpleContainers::HashedArrayTree<int>::size_type>(i + 1));
+        assert(hat1.size() == i + 1);
         assert(hat1[i] == i);
+
+        if (i == 0) {
+            assert(hat1.capacity() == 1); 
+            assert(hat1.max_capacity() == 1); 
+        }
+        if (i == 1) {
+            assert(hat1.capacity() == 2); 
+            assert(hat1.max_capacity() == 4); 
+        }
+        else if (i == 2) {
+            assert(hat1.capacity() == 4);
+            assert(hat1.max_capacity() == 4); 
+        }
+        else if (i == 4) {
+            assert(hat1.capacity() == 8);
+            assert(hat1.max_capacity() == 16); 
+        }
+        else if (i == 16) {
+            assert(hat1.capacity() == 24); 
+            assert(hat1.max_capacity() == 64); 
+        }
+        else if (i == 48) {
+            assert(hat1.capacity() == 56); 
+            assert(hat1.max_capacity() == 64); 
+        }
+        else if (i == 64) {
+            assert(hat1.capacity() == 80); 
+            assert(hat1.max_capacity() == 256); 
+        }
     }
 }
