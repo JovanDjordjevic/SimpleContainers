@@ -129,6 +129,13 @@ namespace simpleContainers {
             // current power of 2 such that 2 ^ mCurrentPow = mInternalVectorCapacity
             // stored here to avoid recalculating on every element access
             size_type mCurrentPow;
+
+            // index of the first leaf in which a new element can be inserted
+
+            // NOTE FOR ME: in the current implementation, mFirstNonFullLeafIndex is STALE in the case when the 
+            // current row for which an insertion happened is fully filled after the isnertion but the current capacity is now
+            // reached. It stays stale untill AFTER the reserve() function finishes 
+            size_type mFirstNonFullLeafIndex;
     };
 
     namespace hat_internal {
@@ -175,7 +182,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
-        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
     {
         // mCurrentPow = 0 in the beginning even though 2 ^ 0 != mInternalVectorCapacity !!
     }
@@ -223,8 +230,16 @@ namespace simpleContainers {
             }
 
             for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
-                if (mInternalData[i].capacity() < mInternalVectorCapacity) {
+                if (mInternalData[i].capacity() == 0) {
                     mInternalData[i].reserve(mInternalVectorCapacity);
+                }
+            }
+
+            // TODO: Benchmark if this is noticeably slowe than doing it in the above loop with some bool flag `found`
+            for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
+                if (mInternalData[i].size() < mInternalData[i].capacity()) {
+                    mFirstNonFullLeafIndex = i;
+                    break;
                 }
             }
 
@@ -289,7 +304,16 @@ namespace simpleContainers {
         for (size_type i = numLeafsToAllocateFor; i < mInternalVectorCapacity; ++i) {
             mInternalData[i] = std::vector<value_type, allocator_type>{};
         }
-        
+
+        // find index for first non-full leaf to avoid calculating that index on every insertion
+        // TODO: See if there is a smarter way
+        for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
+            if (mInternalData[i].size() < mInternalData[i].capacity()) {
+                mFirstNonFullLeafIndex = i;
+                break;
+            }
+        }
+    
         mCurrentCapacity = numLeafsToAllocateFor * newInternalVectorCapacity;
         mInternalVectorCapacity = newInternalVectorCapacity;
         mCurrentPow = hat_internal::what_power_of_2<size_type>(mInternalVectorCapacity);
@@ -310,13 +334,7 @@ namespace simpleContainers {
             reserve(mSize + 1);
         }
 
-        for (auto& leafVector : mInternalData) {
-            if (leafVector.size() < leafVector.capacity()) {
-                leafVector.push_back(elem);
-                break;
-            }
-        }
-        
+        mInternalData[mFirstNonFullLeafIndex].push_back(elem);
         ++mSize;
     }
 
@@ -326,13 +344,7 @@ namespace simpleContainers {
             reserve(mSize + 1);
         }
 
-        for (auto& leafVector : mInternalData) {
-            if (leafVector.size() < leafVector.capacity()) {
-                leafVector.push_back(std::forward<value_type>(elem));
-                break;
-            }
-        }
-        
+        mInternalData[mFirstNonFullLeafIndex].push_back(std::forward<value_type>(elem));
         ++mSize;
     }
 
@@ -343,13 +355,7 @@ namespace simpleContainers {
             reserve(mSize + 1);
         }
 
-        for (auto& leafVector : mInternalData) {
-            if (leafVector.size() < leafVector.capacity()) {
-                leafVector.emplace_back(std::forward<Args>(args)...);
-                break;
-            }
-        }
-        
+        mInternalData[mFirstNonFullLeafIndex].emplace_back(std::forward<Args>(args)...);
         ++mSize;
     }
 
