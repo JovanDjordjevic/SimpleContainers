@@ -82,6 +82,8 @@ namespace simpleContainers {
 
             ~HashedArrayTree() noexcept = default;
 
+            allocator_type get_allocator() const noexcept;
+
             /// @brief Get number of elements in O(sqrt(n)) time
             size_type size() const noexcept;
             size_type max_size() const noexcept;
@@ -185,6 +187,11 @@ namespace simpleContainers {
         : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
     {
         // mCurrentPow = 0 in the beginning even though 2 ^ 0 != mInternalVectorCapacity !!
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::allocator_type HashedArrayTree<T, Allocator>::get_allocator() const noexcept {
+        return mInternalData.get_allocator();
     }
 
     template <typename T, typename Allocator>

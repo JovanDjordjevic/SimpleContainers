@@ -57,6 +57,7 @@ void test_hashed_array_tree_construction() {
 
     SomeAllocatorClass<SomeClass> customAlloc;
     simpleContainers::HashedArrayTree<SomeClass, SomeAllocatorClass<SomeClass>> hat3(customAlloc); // default ctor with custom allocator
+    static_assert(std::is_same<decltype(hat3.get_allocator()), decltype(customAlloc)>::value, "Allocator types do not match");
 
     simpleContainers::HashedArrayTree<SomeClass> hat4 = hat2;  // copy ctor
     assert(hat4.capacity() == hat2.capacity());
