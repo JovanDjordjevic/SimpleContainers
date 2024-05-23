@@ -223,7 +223,9 @@ namespace simpleContainers {
             }
 
             for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
-                mInternalData[i].reserve(mInternalVectorCapacity);
+                if (mInternalData[i].capacity() < mInternalVectorCapacity) {
+                    mInternalData[i].reserve(mInternalVectorCapacity);
+                }
             }
 
             mCurrentCapacity = numLeafsToAllocateFor * mInternalVectorCapacity;
