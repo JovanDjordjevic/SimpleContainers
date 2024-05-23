@@ -123,6 +123,9 @@ namespace simpleContainers {
             // total number of elements currently stored in the HAT
             size_type mSize;
 
+            // Currently allocated memory for data in the HAT
+            size_type mCurrentCapacity;
+
             // current power of 2 such that 2 ^ mCurrentPow = mInternalVectorCapacity
             // stored here to avoid recalculating on every element access
             size_type mCurrentPow;
@@ -172,7 +175,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const allocator_type& alloc)
-        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentPow{0}
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}
     {
         // mCurrentPow = 0 in the beginning even though 2 ^ 0 != mInternalVectorCapacity !!
     }
@@ -189,11 +192,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::size_type HashedArrayTree<T, Allocator>::capacity() const noexcept {
-        size_type capacity = 0;
-        for (const auto& leafVector : mInternalData) {
-            capacity += leafVector.capacity();
-        }
-        return capacity;
+        return mCurrentCapacity;
     }
 
     template <typename T, typename Allocator>
@@ -213,7 +212,7 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::reserve(const size_type newCapacity) noexcept {
-        if (newCapacity <= capacity()) {
+        if (newCapacity <= mCurrentCapacity) {
             return;
         }
 
@@ -226,6 +225,8 @@ namespace simpleContainers {
             for (size_type i = 0; i < numLeafsToAllocateFor; ++i) {
                 mInternalData[i].reserve(mInternalVectorCapacity);
             }
+
+            mCurrentCapacity = numLeafsToAllocateFor * mInternalVectorCapacity;
 
             return;
         }
@@ -286,7 +287,8 @@ namespace simpleContainers {
         for (size_type i = numLeafsToAllocateFor; i < mInternalVectorCapacity; ++i) {
             mInternalData[i] = std::vector<value_type, allocator_type>{};
         }
-
+        
+        mCurrentCapacity = numLeafsToAllocateFor * newInternalVectorCapacity;
         mInternalVectorCapacity = newInternalVectorCapacity;
         mCurrentPow = hat_internal::what_power_of_2<size_type>(mInternalVectorCapacity);
     }
@@ -302,15 +304,11 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::push_back(const value_type& elem) {
-        if (mSize == max_capacity()) {
+        if (mSize == mCurrentCapacity) {
             reserve(mSize + 1);
         }
 
         for (auto& leafVector : mInternalData) {
-            if (leafVector.capacity() < mInternalVectorCapacity) {
-                leafVector.reserve(mInternalVectorCapacity);
-            }
-            
             if (leafVector.size() < leafVector.capacity()) {
                 leafVector.push_back(elem);
                 break;
@@ -322,15 +320,11 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::push_back(value_type&& elem) {
-        if (mSize == max_capacity()) {
+        if (mSize == mCurrentCapacity) {
             reserve(mSize + 1);
         }
 
         for (auto& leafVector : mInternalData) {
-            if (leafVector.capacity() < mInternalVectorCapacity) {
-                leafVector.reserve(mInternalVectorCapacity);
-            }
-            
             if (leafVector.size() < leafVector.capacity()) {
                 leafVector.push_back(std::forward<value_type>(elem));
                 break;
@@ -343,15 +337,11 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     template <typename ...Args>
     inline void HashedArrayTree<T, Allocator>::emplace_back(Args&&... args) {
-        if (mSize == max_capacity()) {
+        if (mSize == mCurrentCapacity) {
             reserve(mSize + 1);
         }
 
         for (auto& leafVector : mInternalData) {
-            if (leafVector.capacity() < mInternalVectorCapacity) {
-                leafVector.reserve(mInternalVectorCapacity);
-            }
-            
             if (leafVector.size() < leafVector.capacity()) {
                 leafVector.emplace_back(std::forward<Args>(args)...);
                 break;
@@ -363,13 +353,13 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::reference HashedArrayTree<T, Allocator>::operator[](const size_type pos) noexcept {
-        SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < size(), "HashedArrayTree subscript operator out of range");
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < mSize, "HashedArrayTree subscript operator out of range");
         return mInternalData[pos >> mCurrentPow][pos & (mInternalVectorCapacity - 1)];
     }
 
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::const_reference HashedArrayTree<T, Allocator>::operator[](const size_type pos) const noexcept {
-        SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < size(), "HashedArrayTree subscript operator out of range");
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < mSize, "HashedArrayTree subscript operator out of range");
         return mInternalData[pos >> mCurrentPow][pos & (mInternalVectorCapacity - 1)];
     }
 
