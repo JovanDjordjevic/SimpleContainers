@@ -73,6 +73,10 @@ namespace simpleContainers {
             void debugPrint() const noexcept;
 
             HashedArrayTree(const allocator_type& alloc = allocator_type{});
+            HashedArrayTree(const size_type initialCapacity, const allocator_type& alloc = allocator_type{});
+            HashedArrayTree(const size_type initialSize, const value_type& val, const allocator_type& alloc = allocator_type{});
+            HashedArrayTree(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc = allocator_type{});
+            HashedArrayTree(std::initializer_list<value_type> initList, const allocator_type& alloc = allocator_type{});
 
             HashedArrayTree(const HashedArrayTree& other) = default;
             HashedArrayTree(HashedArrayTree&& other) noexcept = default;
@@ -189,6 +193,49 @@ namespace simpleContainers {
         : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
     {
         // mCurrentPow = 0 in the beginning even though 2 ^ 0 != mInternalVectorCapacity !!
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(const size_type initialCapacity, const allocator_type& alloc)
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
+    {
+        reserve(initialCapacity);
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(const size_type initialSize, const value_type& val, const allocator_type& alloc)
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
+    {
+        reserve(initialSize);
+
+        // TODO: find a smarter way
+        for (size_type i = 0; i < initialSize; ++i) {
+            emplace_back(val);
+        }
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc)
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
+    {
+        reserve(initVec.size());
+
+        // TODO: find a smarter way
+        for (const auto& elem : initVec) {
+            emplace_back(elem);
+        }
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(std::initializer_list<value_type> initList, const allocator_type& alloc)
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
+    {
+        reserve(initList.size());
+
+        // TODO: find a smarter way
+        for (const auto& elem : initList) {
+            emplace_back(elem);
+        }
     }
 
     template <typename T, typename Allocator>

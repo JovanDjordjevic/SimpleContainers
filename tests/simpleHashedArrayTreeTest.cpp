@@ -86,6 +86,29 @@ void test_hashed_array_tree_construction() {
     hat7 = std::move(hat6); // move assignment
     assert(hat7.capacity() == tmpHat1Capacity);
     assert(hat7.size() == tmpHat1Size);
+
+    simpleContainers::HashedArrayTree<int> hat8(5); // capacity constructor
+    assert(hat8.size() == 0);
+    assert(hat8.capacity() == 8);
+
+    simpleContainers::HashedArrayTree<int> hat9(5, 7); // fill constructor
+    assert(hat9.size() == 5);
+    assert(hat9.capacity() == 8);
+    for (int i = 0; i < hat8.size(); ++i) {
+        assert(hat9[i] == 7);
+    }
+
+    std::vector<SomeTemplateClass<int>> tmpVector1 = {SomeTemplateClass<int>{5}, SomeTemplateClass<int>{6}};
+    simpleContainers::HashedArrayTree<SomeTemplateClass<int>> hat10(tmpVector1); // constructor from vector
+    assert(hat10.size() == tmpVector1.size());
+    assert(hat10[0] == tmpVector1[0]);
+    assert(hat10[1] == tmpVector1[1]);
+
+    simpleContainers::HashedArrayTree<int> hat11{0, 1, 2, 3, 4, 5, 6, 7}; // initializer list constructor
+    assert(hat11.size() == 8);
+    for (auto i = 0; i < hat8.size(); ++i) {
+        assert(hat11[i] == i);
+    }
 }
 
 void test_hashed_array_tree_member_functions() {
