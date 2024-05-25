@@ -98,11 +98,12 @@ namespace simpleContainers {
             /// @brief check if the HAT is full (must have non-zero size)
             bool full() const noexcept;
             bool empty() const noexcept;
-
             /// @brief Reserve enough memory to store at least capacity elements
             void reserve(const size_type newCapacity) noexcept;
-            
             void clear() noexcept;
+
+            /// @brief A copy of all the elements in the HAT as a vector
+            std::vector<value_type> get_as_vector() const noexcept;
 
             void push_back(const value_type& elem);
             void push_back(value_type&& elem);
@@ -335,6 +336,18 @@ namespace simpleContainers {
 
         mSize = 0;
         mFirstNonFullLeafIndex = 0;
+    }
+
+    template <typename T, typename Allocator>
+    inline std::vector<typename HashedArrayTree<T, Allocator>::value_type> HashedArrayTree<T, Allocator>::get_as_vector() const noexcept {
+        std::vector<value_type> res;
+        res.reserve(mSize);
+
+        for (const auto& leaf : mInternalData) {
+            res.insert(res.end(), leaf.begin(), leaf.end());
+        }
+
+        return res;
     }
 
     template <typename T, typename Allocator>

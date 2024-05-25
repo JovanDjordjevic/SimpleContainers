@@ -148,6 +148,13 @@ void test_hashed_array_tree_member_functions() {
         assert(hat1.size() == i + 1);
         assert(hat1[i] == i);
         assert(hat1.at(i) == i);
+    }   
+
+    const auto& hat1_as_vec = hat1.get_as_vector();
+    assert(hat1_as_vec.size() == hat1.size());
+    assert(hat1_as_vec.capacity() == hat1.size());
+    for (auto i = 0; i < hat1_as_vec.size(); ++i) {
+        assert(hat1_as_vec[i] == i);
     }
 }
 
