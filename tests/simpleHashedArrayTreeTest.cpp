@@ -140,6 +140,14 @@ void test_hashed_array_tree_member_functions() {
     hat1.reserve(7 * 16 - 8);
     assert(hat1.capacity() == 112); 
     assert(hat1.max_capacity() == 256); 
+
+    // inserting after clear
+    for (int i = 0; i < 22; ++i) {
+        hat1.push_back(i);
+        hat1.debugPrint();
+        assert(hat1.size() == i + 1);
+        assert(hat1[i] == i);
+    }
 }
 
 void test_hashed_array_tree_insertion() {

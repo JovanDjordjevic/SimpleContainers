@@ -134,9 +134,8 @@ namespace simpleContainers {
 
             // index of the first leaf in which a new element can be inserted
 
-            // NOTE FOR ME: in the current implementation, mFirstNonFullLeafIndex is STALE in the case when the 
-            // current row for which an insertion happened is fully filled after the isnertion but the current capacity is now
-            // reached. It stays stale untill AFTER the reserve() function finishes 
+            // NOTE FOR ME: in the current implementation, mFirstNonFullLeafIndex may be invalid after an insertion
+            // that causes the HAT to reach full capacity, untill after the reserve() call
             size_type mFirstNonFullLeafIndex;
     };
 
@@ -333,6 +332,7 @@ namespace simpleContainers {
         }
 
         mSize = 0;
+        mFirstNonFullLeafIndex = 0;
     }
 
     template <typename T, typename Allocator>
@@ -341,7 +341,14 @@ namespace simpleContainers {
             reserve(mSize + 1);
         }
 
-        mInternalData[mFirstNonFullLeafIndex].push_back(elem);
+        auto& leaf = mInternalData[mFirstNonFullLeafIndex];
+
+        leaf.push_back(elem);
+
+        if (leaf.size() == mInternalVectorCapacity) {
+            ++mFirstNonFullLeafIndex;
+        }
+
         ++mSize;
     }
 
@@ -351,7 +358,14 @@ namespace simpleContainers {
             reserve(mSize + 1);
         }
 
+        auto& leaf = mInternalData[mFirstNonFullLeafIndex];
+
         mInternalData[mFirstNonFullLeafIndex].push_back(std::forward<value_type>(elem));
+
+        if (leaf.size() == mInternalVectorCapacity) {
+            ++mFirstNonFullLeafIndex;
+        }
+        
         ++mSize;
     }
 
@@ -362,7 +376,14 @@ namespace simpleContainers {
             reserve(mSize + 1);
         }
 
+        auto& leaf = mInternalData[mFirstNonFullLeafIndex];
+
         mInternalData[mFirstNonFullLeafIndex].emplace_back(std::forward<Args>(args)...);
+
+        if (leaf.size() == mInternalVectorCapacity) {
+            ++mFirstNonFullLeafIndex;
+        }
+        
         ++mSize;
     }
 
