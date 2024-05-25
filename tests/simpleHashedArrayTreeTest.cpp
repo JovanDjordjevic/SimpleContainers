@@ -147,6 +147,7 @@ void test_hashed_array_tree_member_functions() {
         hat1.debugPrint();
         assert(hat1.size() == i + 1);
         assert(hat1[i] == i);
+        assert(hat1.at(i) == i);
     }
 }
 
@@ -163,6 +164,7 @@ void test_hashed_array_tree_insertion() {
 
         assert(hat1.size() == i + 1);
         assert(hat1[i] == i);
+        assert(hat1.at(i) == i);
 
         if (i == 0) {
             assert(hat1.capacity() == 1); 
