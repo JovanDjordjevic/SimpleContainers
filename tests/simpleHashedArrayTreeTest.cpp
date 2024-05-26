@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <limits>
@@ -12,12 +13,14 @@ void test_internal_helpers();
 void test_hashed_array_tree_construction();
 void test_hashed_array_tree_member_functions();
 void test_hashed_array_tree_insertion();
+void test_hashed_array_tree_iterators();
 
 int main() {
     test_internal_helpers();
     test_hashed_array_tree_construction();
     test_hashed_array_tree_member_functions();
     test_hashed_array_tree_insertion();
+    test_hashed_array_tree_iterators();
     return 0;
 }
 
@@ -225,4 +228,176 @@ void test_hashed_array_tree_insertion() {
             assert(hat1.max_capacity() == 256); 
         }
     }
+}
+
+void test_hashed_array_tree_iterators() {
+    std::cout << "================= TESTING RING BUFFER ITERATORS =================" << std::endl;
+
+    simpleContainers::HashedArrayTree<int> hat1(16);
+    assert(hat1.empty());
+    assert(hat1.begin() == hat1.end());
+
+    size_t elemCnt = 0;
+    std::for_each(hat1.begin(), hat1.end(), [&elemCnt](const int){ ++elemCnt; });
+    assert(elemCnt == hat1.size());
+
+    for (int i = 0; i < 5; ++i) { hat1.emplace_back(i); }
+
+    elemCnt = 0;
+    std::for_each(hat1.begin(), hat1.end(), [&elemCnt](const int){ ++elemCnt; });
+    assert(elemCnt == 5 && hat1.size() == 5);
+    assert(*(hat1.begin()) == 0);
+
+    for (int i = 5; i < 16; ++i) {
+        hat1.emplace_back(i); 
+    }
+
+    elemCnt = 0;
+    std::for_each(hat1.begin(), hat1.end(), [&elemCnt](const int){ ++elemCnt; });
+
+    assert(elemCnt == 16);
+    assert(hat1.full());
+    assert(*(hat1.begin()) == 0);
+    std::vector<int> expectedResult = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    assert(hat1.get_as_vector() == expectedResult);
+
+    auto itHat1Find1 = std::find(hat1.begin(), hat1.end(), 8);
+    assert(itHat1Find1 != hat1.end() && *itHat1Find1 == 8);
+    auto itHat1Find2 = std::find(hat1.begin(), hat1.end(), 12);
+    assert(itHat1Find2 != hat1.end() && *itHat1Find2 == 12);
+
+    itHat1Find1.swap(itHat1Find2);
+    assert(*itHat1Find2 == 8 && *itHat1Find1 == 12);
+
+    std::swap(itHat1Find1, itHat1Find2);
+    assert(*itHat1Find1 == 8 && *itHat1Find2 == 12);
+
+    std::iter_swap(itHat1Find1, itHat1Find2);
+    assert(*itHat1Find1 == 12 && *itHat1Find2 == 8);
+    expectedResult = {0, 1, 2, 3, 4, 5, 6, 7, 12, 9, 10, 11, 8, 13, 14, 15};
+    assert(hat1.get_as_vector() == expectedResult);
+
+    // test multipass
+    simpleContainers::HashedArrayTree<int>::iterator itHat1Begin = hat1.begin();
+    simpleContainers::HashedArrayTree<int>::iterator itHat1BeginCpy = itHat1Begin;
+    auto hat1Item1 = *itHat1Begin;
+    assert(hat1Item1 == 0);
+    ++itHat1Begin;
+    itHat1Begin++;
+    hat1Item1 = *itHat1Begin;
+    assert(hat1Item1 == 2);
+    auto hat1Item2 = *itHat1BeginCpy;
+    assert(hat1Item2 == 0);
+
+    // test const iteration
+    simpleContainers::HashedArrayTree<int> hatEmpty(10);
+    assert(hatEmpty.empty() && hatEmpty.capacity() == 12);
+    simpleContainers::HashedArrayTree<int>::const_iterator itHatEmpty = hatEmpty.begin();
+    assert(itHatEmpty == hatEmpty.end());
+
+    hatEmpty.emplace_back(1);
+    itHatEmpty = hatEmpty.begin();
+    assert(itHatEmpty != hatEmpty.end() && *itHatEmpty == 1);
+
+    elemCnt = 0;
+    for (auto i = hat1.cbegin(); i != hat1.cend(); ++i) {
+        ++ elemCnt;
+    }
+    assert(elemCnt == 16);
+
+    const simpleContainers::HashedArrayTree<int> hat1Const = hat1;
+    elemCnt = 0;
+    std::for_each(hat1.begin(), hat1.end(), [&elemCnt](const int){ ++elemCnt; });
+    assert(elemCnt == 16);
+
+    simpleContainers::HashedArrayTree<int>::const_iterator itHat1Cbegin = hat1.cbegin();
+    simpleContainers::HashedArrayTree<int>::const_iterator itHat1CbeginCpy = itHat1Cbegin;
+    auto hat1Citem1 = *itHat1Cbegin;
+    assert(hat1Citem1 == 0);
+    ++itHat1Cbegin;
+    itHat1Cbegin++;
+    hat1Citem1 = *itHat1Cbegin;
+    assert(hat1Citem1 == 2);
+    auto hat1Citem2 = *itHat1CbeginCpy;
+    assert(hat1Citem2 == 0);
+
+    // create const from non const iterator
+
+    simpleContainers::HashedArrayTree<int>::const_iterator hat1ConstItFromNonConstIt = hat1.begin();
+    assert(*hat1ConstItFromNonConstIt == *hat1.begin());
+
+    auto tmpIt = hat1.cbegin();
+    tmpIt = hat1.begin();
+
+    simpleContainers::HashedArrayTree<int> hat2;
+    for (int i = 0; i < 500; ++i) { hat2.emplace_back(i); }
+    for (auto& elem : hat2) { elem = 0; }
+    auto itHat2End = hat2.end();
+    for (auto it = hat2.begin(); it != itHat2End; ++it) { assert (*it == 0); }
+    for (auto it = hat2.begin(); it != itHat2End; ++it) { *it = 5; }
+    for (auto it = hat2.begin(); it != itHat2End; ++it) { assert (*it == 5); }
+
+    // const simpleContainers::HashedArrayTree<int> hat2Const = hat2;
+    // for (auto& elem : hat2Const) { elem = 0; }   // fails compilation as expected
+    // for (auto it = hat2Const.begin(); it != hat2Const.end(); ++it) {
+    //     assert (*it == 0);   // fails compilation as expected
+    // }
+
+    // test bidirection
+
+    simpleContainers::HashedArrayTree<int> hat3(16);
+    for (int i = 0; i < 8; ++i) { hat3.emplace_back(i); } // fill half
+    assert(hat3.size() == 8 && hat3.capacity() == 16);
+
+    auto itHat3 = hat3.begin();         assert(*itHat3 == 0);
+    ++itHat3;                           assert(*itHat3 == 1);
+    itHat3++;                           assert(*itHat3 == 2);
+    itHat3 += 6;                        assert(itHat3 == hat3.end());
+    --itHat3;                           assert(*itHat3 == 7);
+    itHat3--;                           assert(*itHat3 == 6);
+    itHat3 -= 6;                        assert(itHat3 == hat3.begin());
+
+    for (int i = 8; i < 16; ++i) { hat3.emplace_back(i); }    // fill entire, without old value overwrite
+    assert(hat3.size() == 16 && hat3.capacity() == 16);
+    assert(hat3.full());
+
+    itHat3 = hat3.begin();         assert(*itHat3 == 0);
+    itHat3++;                      assert(*itHat3 == 1);
+    ++itHat3;                      assert(*itHat3 == 2);
+    itHat3 += 13;                  assert(*itHat3 == 15);
+    ++itHat3;                      assert(itHat3 == hat3.end());
+    itHat3--;                      assert(*itHat3 == 15);
+    --itHat3;                      assert(*itHat3 == 14);
+    itHat3 -= 14;                  assert(itHat3 == hat3.begin());
+
+    // testing random access for iterators
+
+    std::vector<int> hat3Expected = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    assert(hat3.get_as_vector() == hat3Expected);
+
+    auto hat3rait1 = hat3.begin();      assert(*hat3rait1 == 0);
+    assert(hat3.begin() + 16 == hat3.end());
+    hat3rait1 += 3;                     assert(*hat3rait1 == 3);
+    hat3rait1 += (-1);                  assert(*hat3rait1 == 2);
+    assert(hat3rait1 + 1 == 1 + hat3rait1 && *(hat3rait1 + 1) == *(1 + hat3rait1));
+    hat3rait1 -= 1;                     assert(*hat3rait1 == 1);
+    
+    assert(hat3rait1[-1] == 0);         assert(*(hat3rait1 + (-1)) == 0);
+    assert(hat3rait1[0] == 1);          assert(*(hat3rait1 + 0) == 1);
+    assert(hat3rait1[1] == 2);          assert(*(hat3rait1 + 1) == 2);
+
+    hat3rait1 = hat3.begin();
+    auto hat3rait2 = hat3.end();
+    assert(static_cast<size_t>(hat3rait2 - hat3rait1) == hat3.size() && hat3rait2 == hat3rait1 + (hat3rait2 - hat3rait1));
+    assert((hat3rait1 - hat3rait2) == (-1) * static_cast<int>(hat3.size()) && hat3rait1 == hat3rait2 + (hat3rait1 - hat3rait2));
+    hat3rait1 += 1;
+    auto hat3rait3 = hat3rait1 + 1;
+    hat3rait2 -= 1;
+    assert (hat3rait2 - hat3rait1 == 14);
+    assert(hat3rait1 < hat3rait2 && hat3rait2 - hat3rait1 > 0);
+    assert(!(hat3rait2 < hat3rait1));
+    assert(hat3rait1 < hat3rait3 && hat3rait3 < hat3rait2 && hat3rait1 < hat3rait2);
+    assert(hat3rait2 > hat3rait1);
+    assert(hat3rait1 <= hat3rait2 && (hat3rait1 <= hat3rait2) == !(hat3rait1 > hat3rait2));
+    assert(hat3rait2 >= hat3rait1 && (hat3rait2 >= hat3rait1) == !(hat3rait2 < hat3rait1));
 }

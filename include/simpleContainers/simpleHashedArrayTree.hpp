@@ -70,6 +70,98 @@ namespace simpleContainers {
             using size_type = typename std::allocator_traits<allocator_type>::size_type;
             using difference_type = typename std::allocator_traits<allocator_type>::difference_type;
 
+            /// @brief Class representing iterators over HashedArrayTree
+            /// @details HashedArrayTree iterators are compliant with the LegacyRandomAccessIterator named requirement.
+            ///          All methods are O(1) time complexity
+            /// @tparam constTag Compile time indicator if iterator is a const iterator or not
+            template <bool constTag = false>
+            class HashedArrayTreeIterator {
+                public:
+                    friend class HashedArrayTreeIterator<false>;
+                    friend class HashedArrayTreeIterator<true>;
+
+                    using iterator_category = std::random_access_iterator_tag;
+                    using size_type = typename HashedArrayTree<T, Allocator>::size_type;
+                    using difference_type = typename HashedArrayTree<T, Allocator>::difference_type;
+                    using value_type = typename HashedArrayTree<T, Allocator>::value_type;
+                    using pointer = typename std::conditional<constTag, typename HashedArrayTree<T, Allocator>::const_pointer, typename HashedArrayTree<T, Allocator>::pointer>::type;
+                    using reference = typename std::conditional<constTag, typename HashedArrayTree<T, Allocator>::const_reference, typename HashedArrayTree<T, Allocator>::reference>::type;
+                    using hat_ptr_t = typename std::conditional<constTag, const HashedArrayTree<T, Allocator>*, HashedArrayTree<T, Allocator>*>::type;
+
+                    HashedArrayTreeIterator(size_type pos = 0, hat_ptr_t hatPtr = nullptr) noexcept;
+                    HashedArrayTreeIterator(const HashedArrayTreeIterator& other) noexcept = default;
+                    /// @brief Converting constructor to create a const iterator from a non-const iterator
+                    /// @details By using SFINAE, this constructor is only available for const iterators since they must 
+                    ///          be implicitly constructible from a non-const iterator
+                    template <bool C = constTag, typename = typename std::enable_if<C>::type>
+                    HashedArrayTreeIterator(const HashedArrayTreeIterator<false>& other) noexcept;
+                    HashedArrayTreeIterator(HashedArrayTreeIterator&& other) noexcept = default;
+                    HashedArrayTreeIterator& operator=(const HashedArrayTreeIterator& rhs) noexcept = default;
+                    HashedArrayTreeIterator& operator=(HashedArrayTreeIterator&& rhs) noexcept = default;
+                    ~HashedArrayTreeIterator() noexcept = default;
+
+                    void swap(HashedArrayTreeIterator& other) noexcept;
+
+                    reference operator*() const noexcept;
+                    pointer operator->() const noexcept;
+
+                    reference operator[](const difference_type n) const noexcept;
+
+                    HashedArrayTreeIterator& operator++() noexcept; // prefix
+                    HashedArrayTreeIterator operator++(int) noexcept; // postfix
+                    HashedArrayTreeIterator& operator+=(const difference_type n) noexcept;
+                    HashedArrayTreeIterator operator+(const difference_type n) const noexcept;
+                    friend HashedArrayTreeIterator operator+(const difference_type n, HashedArrayTreeIterator rhs) noexcept {
+                        rhs += n;
+                        return rhs;
+                    }
+
+                    HashedArrayTreeIterator& operator--() noexcept; // prefix
+                    HashedArrayTreeIterator operator--(int) noexcept; // postfix  
+                    HashedArrayTreeIterator& operator-=(const difference_type n) noexcept;
+                    HashedArrayTreeIterator operator-(const difference_type n) const noexcept;
+                    difference_type operator-(const HashedArrayTreeIterator& other) const noexcept; // Subtraction between two iterators
+
+                    friend bool operator==(const HashedArrayTreeIterator& lhs, const HashedArrayTreeIterator& rhs) noexcept {
+                        SIMPLE_HASHED_ARRAY_TREE_ASSERT(lhs.mHatPtr == rhs.mHatPtr, "HashedArrayTreeIterator == comparison must be done on iterators of the same HashedArrayTree");
+                        return lhs.mPosition == rhs.mPosition;
+                    }
+
+                    friend bool operator!=(const HashedArrayTreeIterator& lhs, const HashedArrayTreeIterator& rhs) noexcept {
+                        SIMPLE_HASHED_ARRAY_TREE_ASSERT(lhs.mHatPtr == rhs.mHatPtr, "HashedArrayTreeIterator != comparison must be done on iterators of the same HashedArrayTree");
+                        return lhs.mPosition != rhs.mPosition;
+                    }
+
+                    friend bool operator<(const HashedArrayTreeIterator& lhs, const HashedArrayTreeIterator& rhs) noexcept {
+                        SIMPLE_HASHED_ARRAY_TREE_ASSERT(lhs.mHatPtr == rhs.mHatPtr, "HashedArrayTreeIterator < comparison must be done on iterators of the same HashedArrayTree");
+                        return lhs.mPosition < rhs.mPosition;
+                    }
+
+                    friend bool operator<=(const HashedArrayTreeIterator& lhs, const HashedArrayTreeIterator& rhs) noexcept {
+                        SIMPLE_HASHED_ARRAY_TREE_ASSERT(lhs.mHatPtr == rhs.mHatPtr, "HashedArrayTreeIterator <= comparison must be done on iterators of the same HashedArrayTree");
+                        return lhs.mPosition <= rhs.mPosition;
+                    }
+
+                    friend bool operator>(const HashedArrayTreeIterator& lhs, const HashedArrayTreeIterator& rhs) noexcept {
+                        SIMPLE_HASHED_ARRAY_TREE_ASSERT(lhs.mHatPtr == rhs.mHatPtr, "HashedArrayTreeIterator > comparison must be done on iterators of the same HashedArrayTree");
+                        return lhs.mPosition > rhs.mPosition;
+                    }
+
+                    friend bool operator>=(const HashedArrayTreeIterator& lhs, const HashedArrayTreeIterator& rhs) noexcept {
+                        SIMPLE_HASHED_ARRAY_TREE_ASSERT(lhs.mHatPtr == rhs.mHatPtr, "HashedArrayTreeIterator >= comparison must be done on iterators of the same HashedArrayTree");
+                        return lhs.mPosition >= rhs.mPosition;
+                    }
+
+                private:
+                    // mPosition is the overall index of an element in the HAT this iterator is for
+                    size_type mPosition;
+                    hat_ptr_t mHatPtr;
+            };
+
+            using iterator = HashedArrayTreeIterator<false>;
+            using const_iterator = HashedArrayTreeIterator<true>;
+
+        public:
             void debugPrint() const noexcept;
 
             HashedArrayTree(const allocator_type& alloc = allocator_type{});
@@ -119,6 +211,13 @@ namespace simpleContainers {
             reference at(const size_type pos);
             const_reference at(const size_type pos) const;
 
+            iterator begin() noexcept;
+            iterator end() noexcept;
+            const_iterator begin() const noexcept;
+            const_iterator end() const noexcept;
+            const_iterator cbegin() const noexcept;
+            const_iterator cend() const noexcept;
+
         private:
             using LeafVector = std::vector<value_type, allocator_type>;
             using OuterAllocator = typename allocator_type::template rebind<LeafVector>::other;
@@ -160,6 +259,121 @@ namespace simpleContainers {
 // ============================================================================================================================================
 
 namespace simpleContainers {
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::HashedArrayTreeIterator(size_type pos, hat_ptr_t hatPtr) noexcept
+        : mPosition{pos}, mHatPtr{hatPtr}
+    {}
+
+    template <typename T, typename Allocator>
+    template <bool constTag> 
+    template <bool C, typename> 
+    inline HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::HashedArrayTreeIterator(const HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<false>& other) noexcept
+        : mPosition{other.mPosition}, mHatPtr{other.mHatPtr} 
+    {}
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline void HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::swap(HashedArrayTreeIterator& other) noexcept {
+        std::swap(mPosition, other.mPosition);
+        std::swap(mHatPtr, other.mHatPtr);
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>::reference
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator*() const noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mHatPtr != nullptr, "HashedArrayTreeIterator::operator* trying to dereference mHatPtr which is a nullptr");
+        return (*mHatPtr)[mPosition];
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>::pointer 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator->() const noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mHatPtr != nullptr, "HashedArrayTreeIterator::operator-> trying to dereference mHatPtr which is a nullptr");
+        return &((*mHatPtr)[mPosition]);
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>::reference
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator[](const difference_type n) const noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mHatPtr != nullptr, "HashedArrayTreeIterator::operator[] trying to dereference mHatPtr which is a nullptr");
+        return (*mHatPtr)[mPosition + static_cast<size_type>(n)];
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>& 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator++() noexcept {
+        ++mPosition;
+        return *this;
+    }
+    
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag> 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator++(int) noexcept {
+        HashedArrayTreeIterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>& 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator+=(const difference_type n) noexcept {
+        mPosition += static_cast<size_type>(n);
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag> 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator+(const difference_type n) const noexcept {
+        return HashedArrayTreeIterator<constTag>(mPosition + static_cast<size_type>(n), mHatPtr);
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>& 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator--() noexcept {
+        --mPosition;
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag> 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator--(int) noexcept {
+        HashedArrayTreeIterator tmp = *this;
+        --(*this);
+        return tmp;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>& 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator-=(const difference_type n) noexcept {
+        mPosition -= static_cast<size_type>(n);
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag> 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator-(const difference_type n) const noexcept {
+        return HashedArrayTreeIterator<constTag>(mPosition - static_cast<size_type>(n), mHatPtr);
+    }
+              
+    template <typename T, typename Allocator>
+    template <bool constTag>
+    inline typename HashedArrayTree<T, Allocator>::template HashedArrayTreeIterator<constTag>::difference_type 
+    HashedArrayTree<T, Allocator>::HashedArrayTreeIterator<constTag>::operator-(const HashedArrayTreeIterator& other) const noexcept {
+        return static_cast<difference_type>(mPosition - other.mPosition);
+    }
+
     template <typename T, typename Allocator>
     inline void HashedArrayTree<T, Allocator>::debugPrint() const noexcept {
         std::cout << std::endl << std::endl << "=========================================" << std::endl;
@@ -473,6 +687,43 @@ namespace simpleContainers {
         return mInternalData.at(pos >> mCurrentPow).at(pos & (mInternalVectorCapacity - 1));
     }
 
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::iterator HashedArrayTree<T, Allocator>::begin() noexcept {
+        if (empty()) {
+            return end();
+        }
+
+        return iterator{0, this};
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::iterator HashedArrayTree<T, Allocator>::end() noexcept {
+        return iterator{mSize, this};
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_iterator HashedArrayTree<T, Allocator>::begin() const noexcept {
+        if (empty()) {
+            return end();
+        }
+
+        return const_iterator{0, this};
+    } 
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_iterator HashedArrayTree<T, Allocator>::end() const noexcept {
+        return const_iterator{mSize, this};
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_iterator HashedArrayTree<T, Allocator>::cbegin() const noexcept {
+        return begin();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_iterator HashedArrayTree<T, Allocator>::cend() const noexcept {
+        return end();
+    }
 
     namespace hat_internal {
         template <typename T>
