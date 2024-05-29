@@ -48,8 +48,10 @@
 // ============================================================================================================================================
 
 namespace simpleContainers {
-    template <typename T, typename Allocator>
-    class HashedArrayTree;
+    namespace hat_internal {
+        template <typename T, typename = void>
+        struct is_iterator;
+    } // namespace hat_internal
 
     /// @brief Class representing a hashed array tree structure (HAT)
     /// @details This is the main class the user should interact with. HashedArrayTree is a way to implement
@@ -169,6 +171,8 @@ namespace simpleContainers {
             HashedArrayTree(const size_type initialSize, const value_type& val, const allocator_type& alloc = allocator_type{});
             HashedArrayTree(const std::vector<value_type, allocator_type>& initVec, const allocator_type& alloc = allocator_type{});
             HashedArrayTree(std::initializer_list<value_type> initList, const allocator_type& alloc = allocator_type{});
+            template <typename Iterator, typename std::enable_if<hat_internal::is_iterator<Iterator>::value, bool>::type = true>
+            HashedArrayTree(Iterator itStart, Iterator itEnd, const allocator_type& alloc = allocator_type{});
 
             HashedArrayTree(const HashedArrayTree& other) = default;
             HashedArrayTree(HashedArrayTree&& other) noexcept = default;
@@ -453,6 +457,18 @@ namespace simpleContainers {
     }
 
     template <typename T, typename Allocator>
+    template <typename Iterator, typename std::enable_if<hat_internal::is_iterator<Iterator>::value, bool>::type>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(Iterator itStart, Iterator itEnd, const allocator_type& alloc)
+        : mInternalData{alloc}, mInternalVectorCapacity{0}, mSize{0}, mCurrentCapacity{0}, mCurrentPow{0}, mFirstNonFullLeafIndex{0}
+    {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(std::distance(itStart, itEnd) >= 0, "Distance between iterators cannot be negative");
+        while (itStart != itEnd) {
+            emplace_back(*itStart);
+            ++itStart;
+        }
+    }
+
+    template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::allocator_type HashedArrayTree<T, Allocator>::get_allocator() const noexcept {
         return mInternalData.get_allocator();
     }
@@ -726,6 +742,24 @@ namespace simpleContainers {
     }
 
     namespace hat_internal {
+        template<typename... Ts>
+        struct make_void {
+            using type = void;
+        };
+        
+        template<typename... Ts>
+        using void_t = typename make_void<Ts...>::type;
+
+        template <typename T, typename>
+        struct is_iterator : std::false_type 
+        {};
+
+        template <typename T>
+        struct is_iterator<T, void_t<
+            typename std::iterator_traits<T>::iterator_category
+        >> : std::true_type 
+        {};
+
         template <typename T>
         inline T next_power_of_2(T capacity) noexcept {
             SIMPLE_HASHED_ARRAY_TREE_STATIC_ASSERT(std::is_integral<T>::value, "Capacity must of integral type");

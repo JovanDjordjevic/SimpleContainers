@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <iterator>
 #include <limits>
 
 #include "simpleContainers/simpleHashedArrayTree.hpp"
@@ -45,6 +46,46 @@ void test_internal_helpers() {
     assert(1 == simpleContainers::hat_internal::what_power_of_2<size_t>(3));
     assert(2 == simpleContainers::hat_internal::what_power_of_2<size_t>(4));
     assert(11 == simpleContainers::hat_internal::what_power_of_2<size_t>(2048));
+
+    static_assert(std::is_same<void, simpleContainers::hat_internal::void_t<>>::value, "void_t not working 1");
+    static_assert(std::is_same<void, simpleContainers::hat_internal::void_t<void>>::value, "void_t not working 2");
+    static_assert(std::is_same<void, simpleContainers::hat_internal::void_t<char>>::value, "void_t not working 3");
+    static_assert(std::is_same<void, simpleContainers::hat_internal::void_t<
+        int, double, void, SomeClass, SomeAllocatorClass<size_t>, 
+        simpleContainers::HashedArrayTree<SomeTemplateClass<char>>>
+    >::value, "void_t not working 4");
+
+    static_assert(!simpleContainers::hat_internal::is_iterator<int>::value, "is_iterator not working 1");
+    static_assert(!simpleContainers::hat_internal::is_iterator<std::vector<int>>::value, "is_iterator not working 2");
+    static_assert(simpleContainers::hat_internal::is_iterator<int*>::value, "is_iterator not working 3");
+    static_assert(simpleContainers::hat_internal::is_iterator<const int*>::value, "is_iterator not working 4");
+    static_assert(!simpleContainers::hat_internal::is_iterator<const int* const>::value, "is_iterator not working 5");
+    static_assert(simpleContainers::hat_internal::is_iterator<std::vector<int>::iterator>::value, "is_iterator not working 6");
+    static_assert(simpleContainers::hat_internal::is_iterator<std::vector<int>::const_iterator>::value, "is_iterator not working 7");
+    static_assert(simpleContainers::hat_internal::is_iterator<std::vector<int>::iterator>::value, "is_iterator not working 8");
+    static_assert(simpleContainers::hat_internal::is_iterator<std::vector<int>::iterator>::value, "is_iterator not working 9");
+    static_assert(simpleContainers::hat_internal::is_iterator<simpleContainers::HashedArrayTree<int>::iterator>::value, "is_iterator not working 10");
+    static_assert(simpleContainers::hat_internal::is_iterator<simpleContainers::HashedArrayTree<int>::const_iterator>::value, "is_iterator not working 11");
+    static_assert(simpleContainers::hat_internal::is_iterator<simpleContainers::HashedArrayTree<int>::pointer>::value, "is_iterator not working 12");
+    static_assert(simpleContainers::hat_internal::is_iterator<simpleContainers::HashedArrayTree<int>::const_pointer>::value, "is_iterator not working 13");
+    static_assert(simpleContainers::hat_internal::is_iterator<std::move_iterator<simpleContainers::HashedArrayTree<int>::iterator>>::value, "is_iterator not working 14");
+    static_assert(simpleContainers::hat_internal::is_iterator<std::move_iterator<simpleContainers::HashedArrayTree<int>::const_iterator>>::value, "is_iterator not working 14");
+
+    static_assert(std::is_same<
+        bool,
+        std::enable_if<
+            simpleContainers::hat_internal::is_iterator<simpleContainers::HashedArrayTree<int>::iterator>::value, 
+            bool
+        >::type
+    >::value, "is_iterator not working in enable_if 1");
+
+    static_assert(std::is_same<
+        bool,
+        std::enable_if<
+            simpleContainers::hat_internal::is_iterator<simpleContainers::HashedArrayTree<int>::const_iterator>::value, 
+            bool
+        >::type
+    >::value, "is_iterator not working in enable_if 2");
 }
 
 void test_hashed_array_tree_construction() {
@@ -97,21 +138,38 @@ void test_hashed_array_tree_construction() {
     simpleContainers::HashedArrayTree<int> hat9(5, 7); // fill constructor
     assert(hat9.size() == 5);
     assert(hat9.capacity() == 8);
-    for (int i = 0; i < hat8.size(); ++i) {
+    for (int i = 0; i < hat9.size(); ++i) {
         assert(hat9[i] == 7);
     }
 
-    std::vector<SomeTemplateClass<int>> tmpVector1 = {SomeTemplateClass<int>{5}, SomeTemplateClass<int>{6}};
-    simpleContainers::HashedArrayTree<SomeTemplateClass<int>> hat10(tmpVector1); // constructor from vector
-    assert(hat10.size() == tmpVector1.size());
-    assert(hat10[0] == tmpVector1[0]);
-    assert(hat10[1] == tmpVector1[1]);
-
-    simpleContainers::HashedArrayTree<int> hat11{0, 1, 2, 3, 4, 5, 6, 7}; // initializer list constructor
-    assert(hat11.size() == 8);
-    for (auto i = 0; i < hat8.size(); ++i) {
-        assert(hat11[i] == i);
+    simpleContainers::HashedArrayTree<char> hat10(5, 'a'); // fill constructor different types
+    assert(hat10.size() == 5);
+    assert(hat10.capacity() == 8);
+    for (int i = 0; i < hat10.size(); ++i) {
+        assert(hat10[i] == 'a');
     }
+
+    std::vector<SomeTemplateClass<int>> tmpVector1 = {SomeTemplateClass<int>{5}, SomeTemplateClass<int>{6}};
+    simpleContainers::HashedArrayTree<SomeTemplateClass<int>> hat11(tmpVector1); // constructor from vector
+    assert(hat11.size() == tmpVector1.size());
+    assert(hat11[0] == tmpVector1[0]);
+    assert(hat11[1] == tmpVector1[1]);
+
+    simpleContainers::HashedArrayTree<int> hat12{0, 1, 2, 3, 4, 5, 6, 7}; // initializer list constructor
+    assert(hat12.size() == 8);
+    for (auto i = 0; i < hat12.size(); ++i) {
+        assert(hat12[i] == i);
+    }
+
+    simpleContainers::HashedArrayTree<int> hat13(hat12.begin(), hat12.end()); // construct from iterators
+    assert(hat13.size() == hat12.size());
+    std::vector<int> hat13Expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    assert(hat13.get_as_vector() == hat13Expected);
+
+    simpleContainers::HashedArrayTree<int> hat14(std::make_move_iterator(hat13.begin()), std::make_move_iterator(hat13.end())); // construct from move iterators
+    assert(hat14.size() == hat14.size());
+    std::vector<int> hat14Expected = {0, 1, 2, 3, 4, 5, 6, 7};
+    assert(hat14.get_as_vector() == hat14Expected);
 }
 
 void test_hashed_array_tree_member_functions() {
