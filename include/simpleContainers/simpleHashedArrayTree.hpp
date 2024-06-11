@@ -231,6 +231,8 @@ namespace simpleContainers {
             template <typename ...Args>
             void emplace_back(Args&&... args);
 
+            void swap(HashedArrayTree& other) noexcept;
+
             reference operator[](const size_type pos) noexcept;
             const_reference operator[](const size_type pos) const noexcept;
             reference at(const size_type pos);
@@ -752,6 +754,16 @@ namespace simpleContainers {
         }
         
         ++mSize;
+    }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::swap(HashedArrayTree& other) noexcept {
+        std::swap(mInternalData, other.mInternalData);
+        std::swap(mInternalVectorCapacity, other.mInternalVectorCapacity);
+        std::swap(mSize, other.mSize);
+        std::swap(mCurrentCapacity, other.mCurrentCapacity);
+        std::swap(mCurrentPow, other.mCurrentPow);
+        std::swap(mFirstNonFullLeafIndex, other.mFirstNonFullLeafIndex);
     }
 
     template <typename T, typename Allocator>

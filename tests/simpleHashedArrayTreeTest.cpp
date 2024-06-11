@@ -264,12 +264,31 @@ void test_hashed_array_tree_member_functions() {
         assert(hat1.at(i) == i);
     }   
 
-    const auto& hat1_as_vec = hat1.get_as_vector();
-    assert(hat1_as_vec.size() == hat1.size());
-    assert(hat1_as_vec.capacity() == hat1.size());
-    for (auto i = 0; i < hat1_as_vec.size(); ++i) {
-        assert(hat1_as_vec[i] == i);
+    const auto& hat1AsVec = hat1.get_as_vector();
+    assert(hat1AsVec.size() == hat1.size());
+    assert(hat1AsVec.capacity() == hat1.size());
+    for (auto i = 0; i < hat1AsVec.size(); ++i) {
+        assert(hat1AsVec[i] == i);
     }
+
+    simpleContainers::HashedArrayTree<int> hat2{1, 2, 3, 4};
+    simpleContainers::HashedArrayTree<int> hat3{1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    auto hat2OldSize = hat2.size();
+    auto hat2OldCapacity = hat2.capacity();
+    auto hat2OldAsVector = hat2.get_as_vector();
+    auto hat3OldSize = hat3.size();
+    auto hat3OldCapacity = hat3.capacity();
+    auto hat3OldAsVector = hat3.get_as_vector();
+
+    hat2.swap(hat3);
+
+    assert(hat2.size() == hat3OldSize);
+    assert(hat2.capacity() == hat3OldCapacity);
+    assert(hat2.get_as_vector() == hat3OldAsVector);
+    assert(hat3.size() == hat2OldSize);
+    assert(hat3.capacity() == hat2OldCapacity);
+    assert(hat3.get_as_vector() == hat2OldAsVector);
 }
 
 void test_hashed_array_tree_insertion() {
