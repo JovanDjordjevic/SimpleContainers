@@ -53,6 +53,27 @@ namespace simpleContainers {
         struct is_iterator;
     } // namespace hat_internal
 
+    template <typename T, typename Allocator>
+    class HashedArrayTree;
+
+    template <typename T, typename Allocator>
+    inline bool operator==(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator!=(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator<(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator<=(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator>(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept;
+
+    template <typename T, typename Allocator>
+    inline bool operator>=(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept;
+
     /// @brief Class representing a hashed array tree structure (HAT)
     /// @details This is the main class the user should interact with. HashedArrayTree is a way to implement
     ///          dynamic arrays that reduces the amount of copying when resizing the structure
@@ -793,6 +814,36 @@ namespace simpleContainers {
     template <typename T, typename Allocator>
     inline typename HashedArrayTree<T, Allocator>::const_iterator HashedArrayTree<T, Allocator>::cend() const noexcept {
         return end();
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator==(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept {
+        return lhs.size() == rhs.size() && std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator!=(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept {
+        return lhs.size() != rhs.size() || !std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator<(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept {
+        return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator<=(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept {
+        return !(rhs < lhs);
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator>(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept {
+        return rhs < lhs;
+    }
+
+    template <typename T, typename Allocator>
+    inline bool operator>=(const HashedArrayTree<T, Allocator>& lhs, const HashedArrayTree<T, Allocator>& rhs) noexcept {
+        return !(lhs < rhs);
     }
 
     namespace hat_internal {

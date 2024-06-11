@@ -14,6 +14,7 @@ void test_internal_helpers();
 void test_hashed_array_tree_construction();
 void test_hashed_array_tree_member_functions();
 void test_hashed_array_tree_insertion();
+void test_hashed_array_tree_comparison();
 void test_hashed_array_tree_iterators();
 
 int main() {
@@ -21,6 +22,7 @@ int main() {
     test_hashed_array_tree_construction();
     test_hashed_array_tree_member_functions();
     test_hashed_array_tree_insertion();
+    test_hashed_array_tree_comparison();
     test_hashed_array_tree_iterators();
     return 0;
 }
@@ -316,8 +318,41 @@ void test_hashed_array_tree_insertion() {
     }
 }
 
+void test_hashed_array_tree_comparison() {
+    std::cout << "================= TESTING HASHED ARRAY TREE COMPARISON OPEARTIONS =================" << std::endl;
+
+    simpleContainers::HashedArrayTree<int> hatCmp1{1, 2, 3};
+    assert(hatCmp1 == hatCmp1);
+    assert(hatCmp1 >= hatCmp1);
+    assert(hatCmp1 <= hatCmp1);
+    assert(!(hatCmp1 < hatCmp1));
+    assert(!(hatCmp1 > hatCmp1));
+    simpleContainers::HashedArrayTree<int> hatCmp2{1, 2, 3};
+    assert(hatCmp1 == hatCmp2);
+    assert(hatCmp1 <= hatCmp2);
+    assert(hatCmp1 >= hatCmp2);
+    assert(!(hatCmp1 < hatCmp2));
+    assert(!(hatCmp1 > hatCmp2));
+
+    hatCmp2 = {2, 3, 4, 5};
+    assert(hatCmp1 != hatCmp2);
+    assert(hatCmp1 < hatCmp2 && !(hatCmp2 < hatCmp1));
+    assert(hatCmp1 <= hatCmp2);
+    
+    simpleContainers::HashedArrayTree<int> hatCmp3{5, 6, 7};
+    assert(hatCmp1 < hatCmp2);
+    assert(hatCmp2 < hatCmp3);
+    assert(hatCmp1 < hatCmp3);
+
+    hatCmp2 = {1, 2, 3};
+    hatCmp3 = {1, 2, 3};
+    assert(hatCmp1 == hatCmp2);
+    assert(hatCmp2 == hatCmp3);
+    assert(hatCmp1 == hatCmp3);
+}
+
 void test_hashed_array_tree_iterators() {
-    std::cout << "================= TESTING RING BUFFER ITERATORS =================" << std::endl;
+    std::cout << "================= TESTING HASHED ARRAY TREE ITERATORS =================" << std::endl;
 
     simpleContainers::HashedArrayTree<int> hat1(16);
     assert(hat1.empty());
