@@ -174,11 +174,11 @@ namespace simpleContainers {
             template <typename Iterator, typename std::enable_if<hat_internal::is_iterator<Iterator>::value, bool>::type = true>
             HashedArrayTree(Iterator itStart, Iterator itEnd, const allocator_type& alloc = allocator_type{});
 
-            HashedArrayTree(const HashedArrayTree& other) = default;
-            HashedArrayTree(HashedArrayTree&& other) noexcept = default;
+            HashedArrayTree(const HashedArrayTree& other);
+            HashedArrayTree(HashedArrayTree&& other) noexcept;
 
-            HashedArrayTree& operator=(const HashedArrayTree& rhs) = default;
-            HashedArrayTree& operator=(HashedArrayTree&& rhs) noexcept = default;
+            HashedArrayTree& operator=(const HashedArrayTree& rhs);
+            HashedArrayTree& operator=(HashedArrayTree&& rhs) noexcept;
 
             ~HashedArrayTree() noexcept = default;
 
@@ -466,6 +466,60 @@ namespace simpleContainers {
             emplace_back(*itStart);
             ++itStart;
         }
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(const HashedArrayTree& other) 
+        : mInternalData{other.mInternalData},
+          mInternalVectorCapacity{other.mInternalVectorCapacity},
+          mSize{other.mSize},
+          mCurrentCapacity{0},
+          mCurrentPow{other.mCurrentPow},
+          mFirstNonFullLeafIndex{other.mFirstNonFullLeafIndex}
+    {
+        reserve(other.mCurrentCapacity);
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>::HashedArrayTree(HashedArrayTree&& other) noexcept 
+        : mInternalData{std::move(other.mInternalData)},
+          mInternalVectorCapacity{other.mInternalVectorCapacity},
+          mSize{other.mSize},
+          mCurrentCapacity{0},
+          mCurrentPow{other.mCurrentPow},
+          mFirstNonFullLeafIndex{other.mFirstNonFullLeafIndex}
+    {
+        reserve(other.mCurrentCapacity);
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>& HashedArrayTree<T, Allocator>::operator=(const HashedArrayTree& rhs) {
+        if (this != &rhs) {
+            mInternalData = rhs.mInternalData;
+            mInternalVectorCapacity = rhs.mInternalVectorCapacity; 
+            mSize = rhs.mSize;
+            mCurrentCapacity = 0; // intentional!
+            mCurrentPow = rhs.mCurrentPow;
+            mFirstNonFullLeafIndex = rhs.mFirstNonFullLeafIndex;
+            reserve(rhs.mCurrentCapacity);
+        }
+
+        return *this;
+    }
+
+    template <typename T, typename Allocator>
+    inline HashedArrayTree<T, Allocator>& HashedArrayTree<T, Allocator>::operator=(HashedArrayTree&& rhs) noexcept {
+        if (this != &rhs) {
+            mInternalData = std::move(rhs.mInternalData);
+            mInternalVectorCapacity = rhs.mInternalVectorCapacity; 
+            mSize = rhs.mSize;
+            mCurrentCapacity = 0; // intentional!
+            mCurrentPow = rhs.mCurrentPow;
+            mFirstNonFullLeafIndex = rhs.mFirstNonFullLeafIndex;
+            reserve(rhs.mCurrentCapacity);
+        }
+
+        return *this;
     }
 
     template <typename T, typename Allocator>

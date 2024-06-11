@@ -167,9 +167,37 @@ void test_hashed_array_tree_construction() {
     assert(hat13.get_as_vector() == hat13Expected);
 
     simpleContainers::HashedArrayTree<int> hat14(std::make_move_iterator(hat13.begin()), std::make_move_iterator(hat13.end())); // construct from move iterators
-    assert(hat14.size() == hat14.size());
+    assert(hat14.size() == hat13.size());
     std::vector<int> hat14Expected = {0, 1, 2, 3, 4, 5, 6, 7};
     assert(hat14.get_as_vector() == hat14Expected);
+
+    // trigger a realloc before doing more move and copy ctor tests
+    hat14.emplace_back(8);
+    hat14.emplace_back(9);
+
+    simpleContainers::HashedArrayTree<int> hat15{hat14}; // copy ctor with non-empty other
+    assert(hat15.capacity() == hat14.capacity());
+    assert(hat15.size() == hat14.size());
+
+    hat15 = hat13; // copy assignment with non-empty other
+    assert(hat15.capacity() == hat13.capacity());
+    assert(hat15.size() == hat13.size());
+
+    auto hat14Capacity = hat14.capacity();
+    auto hat14Size = hat14.size();
+    auto hat14Vec = hat14.get_as_vector();
+    simpleContainers::HashedArrayTree<int> hat16 = std::move(hat14); // move ctor with non-empty other
+    assert(hat16.capacity() == hat14Capacity);
+    assert(hat16.size() == hat14Size);
+    assert(hat16.get_as_vector() == hat14Vec);
+
+    auto hat15Capacity = hat15.capacity();
+    auto hat15Size = hat15.size();
+    auto hat15Vec = hat15.get_as_vector();
+    hat16 = std::move(hat15); // move assignment with non-empty other
+    assert(hat16.capacity() == hat15Capacity);
+    assert(hat16.size() == hat15Size);
+    assert(hat16.get_as_vector() == hat15Vec);
 }
 
 void test_hashed_array_tree_member_functions() {
