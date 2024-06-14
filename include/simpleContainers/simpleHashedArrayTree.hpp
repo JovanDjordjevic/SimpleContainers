@@ -241,6 +241,10 @@ namespace simpleContainers {
             reference at(const size_type pos);
             const_reference at(const size_type pos) const;
 
+            reference front() noexcept;
+            const_reference front() const noexcept;
+            reference back() noexcept;
+            const_reference back() const noexcept;
             iterator begin() noexcept;
             iterator end() noexcept;
             const_iterator begin() const noexcept;
@@ -781,6 +785,30 @@ namespace simpleContainers {
     inline typename HashedArrayTree<T, Allocator>::const_reference HashedArrayTree<T, Allocator>::at(const size_type pos) const {
         SIMPLE_HASHED_ARRAY_TREE_ASSERT(0 <= pos && pos < mSize, "HashedArrayTree subscript operator out of range");
         return mInternalData.at(pos >> mCurrentPow).at(pos & (mInternalVectorCapacity - 1));
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::reference HashedArrayTree<T, Allocator>::front() noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mSize > 0, "Calling front() on empty HashedArrayTree");
+        return *begin();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_reference HashedArrayTree<T, Allocator>::front() const noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mSize > 0, "Calling front() on empty HashedArrayTree");
+        return *begin();
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::reference HashedArrayTree<T, Allocator>::back() noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mSize > 0, "Calling back() on empty HashedArrayTree");
+        return *(end() - 1);
+    }
+
+    template <typename T, typename Allocator>
+    inline typename HashedArrayTree<T, Allocator>::const_reference HashedArrayTree<T, Allocator>::back() const noexcept {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mSize > 0, "Calling back() on empty HashedArrayTree");
+        return *(end() - 1);
     }
 
     template <typename T, typename Allocator>

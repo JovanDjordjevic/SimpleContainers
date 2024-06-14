@@ -299,6 +299,13 @@ void test_hashed_array_tree_member_functions() {
     hat4.shrink_to_fit();
     assert(hat4.size() == 3);
     assert(hat4.capacity() == 16);
+
+    assert(hat4.front() == 1);
+    assert(hat4.back() == 3);
+
+    const simpleContainers::HashedArrayTree<int> hat5 = {2, 4, 6, 8, 10, 12, 14};
+    assert(hat5.front() == 2);
+    assert(hat5.back() == 14);
 }
 
 void test_hashed_array_tree_insertion() {
