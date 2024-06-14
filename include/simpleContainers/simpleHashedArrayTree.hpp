@@ -233,6 +233,7 @@ namespace simpleContainers {
             void push_back(value_type&& elem);
             template <typename ...Args>
             void emplace_back(Args&&... args);
+            void pop_back();
 
             void swap(HashedArrayTree& other) noexcept;
 
@@ -751,6 +752,17 @@ namespace simpleContainers {
         }
         
         ++mSize;
+    }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::pop_back() {
+        SIMPLE_HASHED_ARRAY_TREE_ASSERT(mSize > 0, "Calling pop_back() on empty HashedArrayTree");
+        if (mInternalData[mFirstNonFullLeafIndex].empty()) {
+            --mFirstNonFullLeafIndex;
+        }
+
+        mInternalData[mFirstNonFullLeafIndex].pop_back();
+        --mSize;
     }
 
     template <typename T, typename Allocator>

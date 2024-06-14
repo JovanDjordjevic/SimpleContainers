@@ -352,6 +352,20 @@ void test_hashed_array_tree_insertion() {
             assert(hat1.max_capacity() == 256); 
         }
     }
+
+    hat1.pop_back();
+    hat1.pop_back();
+    hat1.pop_back();
+    assert(hat1.back() == 61);
+    assert(hat1.size() == 62);
+    assert(hat1.capacity() == 80);
+
+    hat1.emplace_back(62);
+    hat1.emplace_back(63);
+    hat1.emplace_back(64);
+    assert(hat1.back() == 64);
+    assert(hat1.size() == 65);
+    assert(hat1.capacity() == 80);
 }
 
 void test_hashed_array_tree_comparison() {
