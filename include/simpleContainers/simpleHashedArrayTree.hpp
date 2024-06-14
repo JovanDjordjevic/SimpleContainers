@@ -196,10 +196,10 @@ namespace simpleContainers {
             HashedArrayTree(Iterator itStart, Iterator itEnd, const allocator_type& alloc = allocator_type{});
 
             HashedArrayTree(const HashedArrayTree& other);
-            HashedArrayTree(HashedArrayTree&& other) noexcept;
+            HashedArrayTree(HashedArrayTree&& other) noexcept = default;
 
             HashedArrayTree& operator=(const HashedArrayTree& rhs);
-            HashedArrayTree& operator=(HashedArrayTree&& rhs) noexcept;
+            HashedArrayTree& operator=(HashedArrayTree&& rhs) noexcept = default;
 
             ~HashedArrayTree() noexcept = default;
 
@@ -493,53 +493,33 @@ namespace simpleContainers {
 
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>::HashedArrayTree(const HashedArrayTree& other) 
-        : mInternalData{other.mInternalData},
-          mInternalVectorCapacity{other.mInternalVectorCapacity},
-          mSize{other.mSize},
+        : mInternalData{other.get_allocator()},
+          mInternalVectorCapacity{0},
+          mSize{0},
           mCurrentCapacity{0},
-          mCurrentPow{other.mCurrentPow},
-          mFirstNonFullLeafIndex{other.mFirstNonFullLeafIndex}
+          mCurrentPow{0},
+          mFirstNonFullLeafIndex{0}
     {
         reserve(other.mCurrentCapacity);
-    }
-
-    template <typename T, typename Allocator>
-    inline HashedArrayTree<T, Allocator>::HashedArrayTree(HashedArrayTree&& other) noexcept 
-        : mInternalData{std::move(other.mInternalData)},
-          mInternalVectorCapacity{other.mInternalVectorCapacity},
-          mSize{other.mSize},
-          mCurrentCapacity{0},
-          mCurrentPow{other.mCurrentPow},
-          mFirstNonFullLeafIndex{other.mFirstNonFullLeafIndex}
-    {
-        reserve(other.mCurrentCapacity);
+        for (const auto& elem : other) {
+            emplace_back(elem);
+        }
     }
 
     template <typename T, typename Allocator>
     inline HashedArrayTree<T, Allocator>& HashedArrayTree<T, Allocator>::operator=(const HashedArrayTree& rhs) {
         if (this != &rhs) {
-            mInternalData = rhs.mInternalData;
-            mInternalVectorCapacity = rhs.mInternalVectorCapacity; 
-            mSize = rhs.mSize;
-            mCurrentCapacity = 0; // intentional!
-            mCurrentPow = rhs.mCurrentPow;
-            mFirstNonFullLeafIndex = rhs.mFirstNonFullLeafIndex;
-            reserve(rhs.mCurrentCapacity);
-        }
+            mInternalData = {};
+            mInternalVectorCapacity = 0;
+            mSize = 0;
+            mCurrentCapacity = 0;
+            mCurrentPow = 0;
+            mFirstNonFullLeafIndex = 0;
 
-        return *this;
-    }
-
-    template <typename T, typename Allocator>
-    inline HashedArrayTree<T, Allocator>& HashedArrayTree<T, Allocator>::operator=(HashedArrayTree&& rhs) noexcept {
-        if (this != &rhs) {
-            mInternalData = std::move(rhs.mInternalData);
-            mInternalVectorCapacity = rhs.mInternalVectorCapacity; 
-            mSize = rhs.mSize;
-            mCurrentCapacity = 0; // intentional!
-            mCurrentPow = rhs.mCurrentPow;
-            mFirstNonFullLeafIndex = rhs.mFirstNonFullLeafIndex;
             reserve(rhs.mCurrentCapacity);
+            for (const auto& elem : rhs) {
+                emplace_back(elem);
+            }
         }
 
         return *this;
