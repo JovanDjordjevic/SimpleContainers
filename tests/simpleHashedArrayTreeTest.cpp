@@ -289,6 +289,16 @@ void test_hashed_array_tree_member_functions() {
     assert(hat3.size() == hat2OldSize);
     assert(hat3.capacity() == hat2OldCapacity);
     assert(hat3.get_as_vector() == hat2OldAsVector);
+
+    simpleContainers::HashedArrayTree<int> hat4 = {1, 2, 3};
+    assert(hat4.size() == 3);
+    assert(hat4.capacity() == 4);
+    hat4.reserve(128);
+    assert(hat4.size() == 3);
+    assert(hat4.capacity() == 128);
+    hat4.shrink_to_fit();
+    assert(hat4.size() == 3);
+    assert(hat4.capacity() == 16);
 }
 
 void test_hashed_array_tree_insertion() {

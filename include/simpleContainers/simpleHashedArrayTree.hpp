@@ -222,6 +222,9 @@ namespace simpleContainers {
             /// @brief Reserve enough memory to store at least capacity elements
             void reserve(const size_type newCapacity) noexcept;
             void clear() noexcept;
+            /// @brief Deallocates as much unused memory as possible
+            /// @details This will only deallocate memory of leaf vectors that are currently empty
+            void shrink_to_fit() noexcept;
 
             /// @brief A copy of all the elements in the HAT as a vector
             std::vector<value_type> get_as_vector() const noexcept;
@@ -670,6 +673,16 @@ namespace simpleContainers {
 
         mSize = 0;
         mFirstNonFullLeafIndex = 0;
+    }
+
+    template <typename T, typename Allocator>
+    inline void HashedArrayTree<T, Allocator>::shrink_to_fit() noexcept {
+        for (auto& leafVector : mInternalData) {
+            if (leafVector.empty()) {
+                mCurrentCapacity -= leafVector.capacity();
+                leafVector = LeafVector{};
+            }
+        }
     }
 
     template <typename T, typename Allocator>
